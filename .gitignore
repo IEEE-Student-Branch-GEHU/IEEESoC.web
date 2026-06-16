@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+extract_docx.py
+extracted_content.txt
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Source docs (too large for git)
+*.docx
