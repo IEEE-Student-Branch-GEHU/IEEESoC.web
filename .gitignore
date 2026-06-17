@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+temp/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -16,6 +17,8 @@
 # next.js
 /.next/
 /out/
+temp/.next/
+temp/out/
 
 # production
 /build
