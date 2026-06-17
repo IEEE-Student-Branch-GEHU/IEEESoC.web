@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 export default function Hero({ onExploreClick }) {
@@ -57,8 +58,8 @@ export default function Hero({ onExploreClick }) {
               style={{ y: statueY, scale: statueScale }}
               className="sculpture-img-container"
             >
-              <img
-                src="/assets/athena_cutout.png?v=4"
+              <Image
+                src="/assets/athena_cutout.png"
                 alt="Athena, Goddess of Wisdom"
                 width={400}
                 height={550}

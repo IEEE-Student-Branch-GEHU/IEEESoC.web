@@ -10,7 +10,7 @@ const TRACKS_DATA = [
     name: "Full-Stack & Mobile",
     stack: "Next.js / React Native / Rust",
     desc: "Forging highly reactive user interfaces and robust web applications. Focus on speed, micro-interactions, and offline-first capabilities.",
-    sculpture: "/assets/hephaestus_cutout.png?v=4",
+    sculpture: "/assets/hephaestus_cutout.png",
     alt: "Hephaestus"
   },
   {
@@ -18,7 +18,7 @@ const TRACKS_DATA = [
     name: "AI & Core Analytics",
     stack: "PyTorch / JAX / WebGPU",
     desc: "Building low-latency inference pipelines, local LLM architectures, and data visualization tools that illuminate hidden models.",
-    sculpture: "/assets/aristotle_cutout.png?v=4",
+    sculpture: "/assets/aristotle_cutout.png",
     alt: "Aristotle"
   },
   {
@@ -26,7 +26,7 @@ const TRACKS_DATA = [
     name: "Cloud & Infrastructure",
     stack: "Docker / Go / Kubernetes",
     desc: "Bearing the weight of heavy traffic. Tuning caching, database connection pooling, serverless edges, and reliable cloud deployments.",
-    sculpture: "/assets/atlas_cutout.png?v=4",
+    sculpture: "/assets/atlas_cutout.png",
     alt: "Atlas"
   },
   {
@@ -34,7 +34,7 @@ const TRACKS_DATA = [
     name: "Security & Web3",
     stack: "Solidity / Rust / Wasm",
     desc: "Designing secure systems, auditing smart contracts, protecting against runtime exploits, and orchestrating decentralized handshakes.",
-    sculpture: "/assets/ares_cutout.png?v=4",
+    sculpture: "/assets/ares_cutout.png",
     alt: "Ares"
   },
   {
@@ -42,7 +42,7 @@ const TRACKS_DATA = [
     name: "Research & Frontier",
     stack: "LaTeX / Python / Markdown",
     desc: "Venturing into unmapped academic landscapes. Structuring literature reviews, compiling benchmarks, and translating complex concepts.",
-    sculpture: "/assets/prometheus_cutout.png?v=4",
+    sculpture: "/assets/prometheus_cutout.png",
     alt: "Prometheus"
   }
 ];
@@ -65,7 +65,7 @@ export default function Tracks() {
               <span className="track-num">{track.num}</span>
               
               <div className="track-sculpture-wrapper">
-                <img
+                <Image
                   src={track.sculpture}
                   alt={track.alt}
                   width={160}

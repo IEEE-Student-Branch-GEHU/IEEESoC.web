@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
@@ -57,9 +58,11 @@ export default function Home() {
               
               {/* Notched Transition Card Section */}
               <section className="section-custom featured-painting-section">
-                <img 
+                <Image 
                   src="/assets/landscape.png" 
                   alt="Classical oil landscape" 
+                  fill
+                  style={{ objectFit: 'cover' }}
                   className="featured-painting-bg"
                 />
                 <div className="notched-card-container">
