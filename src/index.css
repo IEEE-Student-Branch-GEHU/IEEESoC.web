@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "EB Garamond", serif;
+  --font-sans: "Hanken Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Custom palette colors from Renaissance Putty archetype */
+  --color-surface-container-highest: #e5e2d9;
+  --color-on-surface: #1c1c16;
+  --color-inverse-on-surface: #f3f1e7;
+  --color-surface-bright: #fcf9ef;
+  --color-on-primary-container: #505046;
+  --color-background: #fcf9ef;
+  --color-on-error-container: #93000a;
+  --color-inverse-primary: #c8c7ba;
+  --color-on-primary-fixed-variant: #47473d;
+  --color-surface-tint: #5f5f54;
+  --color-inverse-surface: #31312a;
+  --color-on-tertiary-container: #50504f;
+  --color-primary: #5f5f54;
+  --color-secondary-fixed-dim: #c6c6c6;
+  --color-error: #ba1a1a;
+  --color-surface-dim: #dcdad0;
+  --color-secondary: #5e5e5e;
+  --color-tertiary-fixed-dim: #c8c6c5;
+  --color-on-secondary-fixed: #1b1b1b;
+  --color-outline-variant: #c8c7bd;
+  --color-on-primary: #ffffff;
+  --color-tertiary-container: #c4c2c1;
+  --color-on-tertiary: #ffffff;
+  --color-surface: #fcf9ef;
+  --color-on-secondary-container: #646464;
+  --color-secondary-container: #e2e2e2;
+  --color-on-primary-fixed: #1b1c14;
+  --color-on-secondary-fixed-variant: #474747;
+  --color-primary-fixed-dim: #c8c7ba;
+  --color-surface-container: #f1eee4;
+  --color-surface-container-high: #ebe8de;
+  --color-error-container: #ffdad6;
+  --color-surface-container-lowest: #ffffff;
+  --color-tertiary-fixed: #e4e2e1;
+  --color-on-secondary: #ffffff;
+  --color-primary-fixed: #e4e3d5;
+  --color-on-tertiary-fixed: #1b1c1b;
+  --color-outline: #78776f;
+  --color-on-surface-variant: #474740;
+  --color-on-error: #ffffff;
+  --color-surface-variant: #e5e2d9;
+  --color-on-tertiary-fixed-variant: #474746;
+  --color-surface-container-low: #f6f4ea;
+  --color-secondary-fixed: #e2e2e2;
+  --color-tertiary: #5e5e5e;
+  --color-primary-container: #c4c3b6;
+  --color-on-background: #1c1c16;
+}
+
+/* Custom visual utilities to match high fidelity HTML */
+.notched-card {
+  background-color: #fcf9ef; /* surface */
+  border: 1px solid #1c1c16; /* on-surface */
+  clip-path: polygon(
+    6px 0%, calc(100% - 6px) 0%, 
+    100% 6px, 100% calc(100% - 6px), 
+    calc(100% - 6px) 100%, 6px 100%, 
+    0% calc(100% - 6px), 0% 6px
+  );
+}
+
+.status-chip {
+  border: 1px solid #1c1c16;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+/* Hide scrollbars but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+body {
+  background-color: #c4c3b6; /* Putty Container */
+  color: #1c1c16;
+  font-family: "Hanken Grotesk", sans-serif;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Accent overlays with subtle ambient noise or lighting gradients */
+.putty-overlay {
+  background: radial-gradient(circle at 50% 50%, rgba(252, 249, 239, 0.15) 0%, rgba(196, 195, 182, 0.45) 100%);
+  pointer-events: none;
+}
+
+/* ==========================================
+   THE POP TOUCH: RETRO DYNAMIC NEO-POP THEME
+   ========================================== */
+
+/* Active theme state with super saturated fluorescent tones and bold comic shadows */
+.pop-mode {
+  --color-primary-container: #ff2a85; /* Hot Candy Pink */
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-bright: #ffd214; /* Sunflower Yellow */
+  --color-surface-container-highest: #00ffff; /* Neon Cyan */
+  --color-on-surface: #000000; /* Crisp thick lines */
+  --color-on-background: #000000;
+  --color-outline: #000000;
+  --color-surface-container: #a12ffa; /* Retro Violet */
+  --color-surface-container-high: #ff5eb4;
+  --color-surface-container-low: #00ff66; /* Neon Lime */
+  
+  /* Background override for high-contrast playful pop */
+  background-color: #ffd214 !important;
+}
+
+/* Retro comic offset block shadows */
+.pop-mode .notched-card {
+  background-color: #ffffff !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 8px 8px 0px #000000 !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* Playful bouncy hover state */
+.pop-mode .notched-card:hover {
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 12px 12px 0px #000000 !important;
+  border-color: #ff2a85 !important;
+}
+
+/* Bold thick outlines on chips */
+.pop-mode .status-chip {
+  border: 2.5px solid #000000 !important;
+  background-color: #00ffff !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+/* Fun physical feedback for buttons in pop mode */
+.pop-mode button {
+  border: 2.5px solid #000000 !important;
+  box-shadow: 5px 5px 0px #000000 !important;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.pop-mode button:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 7px 7px 0px #000000 !important;
+}
+
+.pop-mode button:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+/* Polka-dot halftones overlay for pop-art layout */
+.pop-mode .putty-overlay {
+  background: 
+    radial-gradient(#00ffff 12%, transparent 13%),
+    radial-gradient(#ff2a85 12%, transparent 13%),
+    transparent !important;
+  background-size: 32px 32px !important;
+  background-position: 0 0, 16px 16px !important;
+  opacity: 0.22 !important;
+}
+
+/* Vibrant classical column relics in Pop Mode */
+.pop-mode img {
+  filter: hue-rotate(310deg) saturate(3.5) drop-shadow(4px 4px 0px #000000) !important;
+}
+
+/* Sparkle animation for active items */
+@keyframes popPulseGlow {
+  0%, 100% { outline: 3px solid #ff2a85; }
+  50% { outline: 3px solid #00ffff; }
+}
+
+.pop-accent-active {
+  animation: popPulseGlow 1.5s infinite;
+}
+

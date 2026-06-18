@@ -1,0 +1,6 @@
+{
+  "name": "Hall of Chronicles",
+  "description": "An immersive digital gallery, archivist chronicle keeper, and system simulator",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
