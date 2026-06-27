@@ -12,17 +12,9 @@ interface LeaderboardViewProps {
 }
 
 export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProps) {
-  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(() => {
-    const saved = localStorage.getItem("hall_chronicles_keepers");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // Fallback
-      }
-    }
-    return DEFAULT_KEEPERS;
-  });
+  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(DEFAULT_KEEPERS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"count" | "reputation" | "rank">("rank");
@@ -32,9 +24,55 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
   const [initialCount, setInitialCount] = useState(10000);
   const [lastPledgeTarget, setLastPledgeTarget] = useState<string | null>(null);
 
+  const fetchLiveRankings = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("https://purvansh01-ieee-soc-bot.hf.space/api/leaderboard?limit=25");
+      const result = await response.json();
+      if (result.success && result.data) {
+        const mappedData: KeeperLeaderboardRow[] = result.data.map((f: any) => ({
+          rank: f.rank,
+          name: f.name || `@${f.username}`,
+          role: `${f.track} Contributor`,
+          chroniclesCount: f.mergedPRCount,
+          reputationPoints: f.score,
+          imageUrl: f.avatarUrl || ARTIFACT_IMAGES.socrates,
+          status: f.score > 0 ? "active" : "synchronizing"
+        }));
+        setKeepers(mappedData);
+      } else {
+        throw new Error("Leaderboard API returned unsuccessful response.");
+      }
+    } catch (err: any) {
+      console.error("Failed to load live rankings:", err);
+      setError(err.message || "Failed to load live rankings.");
+      
+      // Fallback to local storage or defaults
+      const saved = localStorage.getItem("hall_chronicles_keepers");
+      if (saved) {
+        try {
+          setKeepers(JSON.parse(saved));
+        } catch (e) {
+          setKeepers(DEFAULT_KEEPERS);
+        }
+      } else {
+        setKeepers(DEFAULT_KEEPERS);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveRankings();
+  }, []);
+
   // Persistence
   useEffect(() => {
-    localStorage.setItem("hall_chronicles_keepers", JSON.stringify(keepers));
+    if (keepers !== DEFAULT_KEEPERS) {
+      localStorage.setItem("hall_chronicles_keepers", JSON.stringify(keepers));
+    }
   }, [keepers]);
 
   // Handle Pledge action - updates counts dynamically
@@ -152,6 +190,15 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
                 <option value="reputation">Sort by Reputation</option>
               </select>
             </div>
+
+            <button
+              onClick={fetchLiveRankings}
+              disabled={isLoading}
+              className="flex items-center justify-center p-2.5 border border-on-surface/10 rounded bg-surface hover:bg-on-surface/5 transition-all text-on-surface disabled:opacity-50 cursor-pointer"
+              title="Sync Live Rankings"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
 
             <button
               onClick={() => setShowNominateModal(true)}
