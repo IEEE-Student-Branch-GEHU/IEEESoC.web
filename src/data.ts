@@ -2,17 +2,17 @@ import { ChronicleArtifact, KeeperLeaderboardRow } from "./types";
 
 export const ARTIFACT_IMAGES = {
   column: "/images/column.png",
-  castle: "/images/castle.png",
-  athena: "https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?q=80&w=600&auto=format&fit=crop",
-  socrates: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop",
-  hephaestus: "https://images.unsplash.com/photo-1534224039826-c7a0dea0e66a?q=80&w=600&auto=format&fit=crop",
-  aristotle: "https://images.unsplash.com/photo-1580894732444-8fecef2271ff?q=80&w=600&auto=format&fit=crop",
-  atlas: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop",
-  ares: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=600&auto=format&fit=crop",
-  prometheus: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?q=80&w=600&auto=format&fit=crop",
-  neuralLattice: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=600&auto=format&fit=crop",
-  gildedGuardian: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?q=80&w=600&auto=format&fit=crop",
-  valerius: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop"
+  castle: "/assets/architecture.png",
+  athena: "/assets/athena_cutout.png",
+  socrates: "/assets/still_life.png",
+  hephaestus: "/assets/hephaestus_cutout.png",
+  aristotle: "/assets/aristotle_cutout.png",
+  atlas: "/assets/atlas_cutout.png",
+  ares: "/assets/ares_cutout.png",
+  prometheus: "/assets/prometheus_cutout.png",
+  neuralLattice: "/assets/vignette.png",
+  gildedGuardian: "/assets/frontend.png",
+  valerius: "/assets/landscape.png"
 };
 
 export const DEFAULT_ARTIFACTS: ChronicleArtifact[] = [
