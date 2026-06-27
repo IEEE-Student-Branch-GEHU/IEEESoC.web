@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
-import { DEFAULT_ARTIFACTS } from "../data";
+import { DEFAULT_ARTIFACTS, ARTIFACT_IMAGES } from "../data";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
   User, CheckCircle, Crosshair, Award, Sparkles, X, Heart
@@ -59,7 +59,7 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
       name: newName,
       description: newDescription || "No custom description cataloged.",
       category: newCategory,
-      imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuADyhAIG5m6qhPEAfX3956kznqTKjMolCzI6scqQkRtv2L2cqru41giQB8M1JV_107_zScJqZpIWj7Wn2_diFQ-H4v4DmuQEnV2OtEZjkC0QC67Fz2ajQMWHL7I3kRr_VkZyAOgzRllL_vFetH51hQ096fuEnmgel2MwHnmLjjfWZvpIpAIvPkNT3WYlkGWJbGupwuuiSpl9ToXWj73ihO8Pxq74maAakI2WB38c3f6mx4OViEf9DDJor8UYMDoz1iGi_wTkhHwHN0", // placeholder
+      imageUrl: ARTIFACT_IMAGES.neuralLattice, // placeholder
       loadIndex: newLoad,
       purityIndex: newPurity,
       cyberMeshLevel: newMesh,

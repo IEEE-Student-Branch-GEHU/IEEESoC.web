@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeeperLeaderboardRow } from "../types";
-import { DEFAULT_KEEPERS } from "../data";
+import { DEFAULT_KEEPERS, ARTIFACT_IMAGES } from "../data";
 import { 
   Award, Search, ArrowUpDown, ChevronUp, UserPlus, Heart, 
   ShieldAlert, RefreshCw, Sparkles, X, PlusCircle 
@@ -75,7 +75,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
       role: newKeeperRole,
       chroniclesCount: initialCount,
       reputationPoints: Math.round(initialCount / 100),
-      imageUrl: "https://lh3.googleusercontent.com/aida/AP1WRLvdCLFQsDKHzmGQva0jSSSDkzk_X4AqZi83O6xxO4SebmIyOsuJ8B9HVs1ng8KGU8xzSKCLC-Dzg6DB4g1h9IP2Dg6YhxgUTmRx313qswI2hQVZZtR67eMgeD03PnPZTakvrnvf1nu1hm4MLoNCD5IKEDcT2CmVjcAaRu0MATlXfn_D_hO9uJ-zExRYKcoq0eWelR764KE_k3C--3R61XNxw94DdzOOcEHOAYRGX5QAw0Ndq8dYX8QTc30", // default statue
+      imageUrl: ARTIFACT_IMAGES.socrates, // default statue
       status: "synchronizing"
     };
 
