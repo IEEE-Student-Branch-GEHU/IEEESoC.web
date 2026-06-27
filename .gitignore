@@ -48,4 +48,6 @@ static-archive/
 *.docx
 temp-next/
 .agents/
+/dist
+
 
