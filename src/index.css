@@ -58,14 +58,18 @@
 
 /* Custom visual utilities to match high fidelity HTML */
 .notched-card {
-  background-color: #fcf9ef; /* surface */
-  border: 1px solid #1c1c16; /* on-surface */
+  position: relative;
   clip-path: polygon(
-    6px 0%, calc(100% - 6px) 0%, 
-    100% 6px, 100% calc(100% - 6px), 
-    calc(100% - 6px) 100%, 6px 100%, 
-    0% calc(100% - 6px), 0% 6px
+    6px 0%,
+    calc(100% - 6px) 0%,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    0% calc(100% - 6px),
+    0% 6px
   );
+  outline: 1px solid #1c1c16;
 }
 
 .status-chip {
