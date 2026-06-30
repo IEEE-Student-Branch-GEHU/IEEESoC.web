@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Compass, List, Play, Cpu, Heart, 
-  Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive
+  Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive, Sliders
 } from "lucide-react";
 
 // Types & Data
@@ -15,9 +15,10 @@ import CrateView from "./components/CrateView";
 import LeaderboardView from "./components/LeaderboardView";
 import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
+import AdminView from "./components/AdminView";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin">("gallery");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [logs, setLogs] = useState<TelemetryLog[]>(CORE_TELEMETRIAL_LOGS_PRESET);
   const [activeFooterModal, setActiveFooterModal] = useState<"privacy" | "status" | "manual" | null>(null);
@@ -202,6 +203,18 @@ export default function App() {
               <motion.span layoutId="nav-glow" className="absolute bottom-0 inset-x-0 h-[2px] bg-on-surface" />
             )}
           </button>
+
+          <button 
+            onClick={() => setActiveTab("admin")}
+            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
+              activeTab === "admin" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
+            }`}
+          >
+            Admin Panel
+            {activeTab === "admin" && (
+              <motion.span layoutId="nav-glow" className="absolute bottom-0 inset-x-0 h-[2px] bg-on-surface" />
+            )}
+          </button>
         </nav>
 
         {/* Actions cluster */}
@@ -288,6 +301,20 @@ export default function App() {
               />
             </motion.div>
           )}
+
+          {activeTab === "admin" && (
+            <motion.div
+              key="admin-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
+            >
+              <AdminView 
+                onAddLogMessage={handleAddNewLog}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -325,6 +352,17 @@ export default function App() {
             }`}
           >
             <Cpu className="w-3.5 h-3.5" /> Bot Simulator
+          </button>
+
+          <button 
+            onClick={() => setActiveTab("admin")}
+            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
+              activeTab === "admin" 
+                ? "bg-on-surface text-surface" 
+                : "text-on-surface hover:bg-surface-container-high"
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" /> Admin Console
           </button>
         </nav>
       </div>
