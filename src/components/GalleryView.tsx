@@ -62,68 +62,6 @@ export default function GalleryView({ onEnterLyceum, onExploreCrate }: GalleryVi
 
   return (
     <div className="relative w-full min-h-screen">
-      {/* BACKGROUND FLOATING PILLARS (Immersive Parallax Mockup for visual continuity) */}
-      <div className="absolute inset-x-0 top-0 h-screen pointer-events-none overflow-hidden z-10 opacity-40 flex justify-between items-center px-4 md:px-16">
-        {/* Left Columns Container */}
-        <div className="flex gap-4 md:gap-8 items-end transform -translate-x-12 md:-translate-x-6 h-full pb-10">
-          <motion.div 
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1.8, ease: "easeOut" }}
-            className="w-16 md:w-28 h-4/5 flex flex-col justify-end"
-          >
-            <img 
-              referrerPolicy="no-referrer"
-              src={ARTIFACT_IMAGES.column} 
-              alt="Decorative Greek Column" 
-              className="w-full object-contain filter grayscale"
-            />
-          </motion.div>
-          <motion.div 
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: 0, opacity: 0.6 }}
-            transition={{ duration: 2.2, ease: "easeOut", delay: 0.2 }}
-            className="w-10 md:w-20 h-2/3 flex flex-col justify-end"
-          >
-            <img 
-              referrerPolicy="no-referrer"
-              src={ARTIFACT_IMAGES.column} 
-              alt="Decorative Column Small" 
-              className="w-full object-contain filter grayscale"
-            />
-          </motion.div>
-        </div>
-
-        {/* Right Columns Container */}
-        <div className="flex gap-4 md:gap-8 items-end transform translate-x-12 md:translate-x-6 h-full pb-10">
-          <motion.div 
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: 0, opacity: 0.6 }}
-            transition={{ duration: 2.2, ease: "easeOut", delay: 0.3 }}
-            className="w-10 md:w-20 h-2/3 flex flex-col justify-end"
-          >
-            <img 
-              referrerPolicy="no-referrer"
-              src={ARTIFACT_IMAGES.column} 
-              alt="Decorative Column Small" 
-              className="w-full object-contain filter grayscale"
-            />
-          </motion.div>
-          <motion.div 
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1.8, ease: "easeOut" }}
-            className="w-16 md:w-28 h-4/5 flex flex-col justify-end"
-          >
-            <img 
-              referrerPolicy="no-referrer"
-              src={ARTIFACT_IMAGES.column} 
-              alt="Decorative Greek Column" 
-              className="w-full object-contain filter grayscale"
-            />
-          </motion.div>
-        </div>
-      </div>
 
       {/* VIEW-SECTION ACTIVE: HERO LANDING SCREEN */}
       <section className="relative min-h-screen w-full flex flex-col items-center justify-center text-center px-4 z-20">

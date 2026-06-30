@@ -174,7 +174,7 @@ export const LITER_QUOTES = [
   {
     id: "quote-1",
     quote: "Knowledge is the wing wherewith we fly to heaven.",
-    author: "Digital Archives"
+    author: "Hermes Trismegistus"
   },
   {
     id: "quote-2",
