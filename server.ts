@@ -1,10 +1,13 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import session from "express-session";
+import passport from "passport";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectDB } from "./src/config/db";
 import authRouter from "./src/routes/auth";
+import oauthRouter from "./src/routes/oauth";
 import usersRouter from "./src/routes/users";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,7 +18,19 @@ const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || "session-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/api/auth", authRouter);
+app.use("/api/auth", oauthRouter);
 app.use("/api/users", usersRouter);
 
 const isProduction = process.env.NODE_ENV === "production";
