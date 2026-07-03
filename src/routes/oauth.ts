@@ -10,7 +10,7 @@ const router = Router();
 const FRONTEND_URL = process.env.APP_URL || "http://localhost:3000";
 
 function findOrCreateUser(profile: any, provider: "google" | "github"): Promise<any> {
-  const email = profile.emails?.[0]?.value || profile.username + "@github.oauth";
+  const email = profile.emails?.[0]?.value || profile.username + "@" + provider + ".oauth";
   const name = profile.displayName || profile.username;
   const avatarUrl = profile.photos?.[0]?.value;
   const providerId = profile.id;
@@ -18,7 +18,10 @@ function findOrCreateUser(profile: any, provider: "google" | "github"): Promise<
 
   return PortalUser.findOneAndUpdate(
     { provider, providerId },
-    { $setOnInsert: { name, email, provider, providerId, githubUsername, avatarUrl, role: "contributor" } },
+    {
+      $setOnInsert: { name, email: email.toLowerCase(), provider, providerId, githubUsername, avatarUrl, role: "contributor" },
+      $set: { name, avatarUrl, githubUsername },
+    },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   ).lean();
 }
@@ -36,6 +39,7 @@ if (process.env.GOOGLE_CLIENT_ID) {
           const user = await findOrCreateUser(profile, "google");
           done(null, user as any);
         } catch (err) {
+          console.error("GoogleStrategy error:", err);
           done(err as Error);
         }
       },
@@ -57,6 +61,7 @@ if (process.env.GITHUB_CLIENT_ID) {
           const user = await findOrCreateUser(profile, "github");
           done(null, user as any);
         } catch (err) {
+          console.error("GitHubStrategy error:", err);
           done(err as Error);
         }
       },
@@ -79,12 +84,26 @@ if (process.env.GOOGLE_CLIENT_ID) {
 
   router.get(
     "/google/callback",
-    passport.authenticate("google", { session: false, failureRedirect: `${FRONTEND_URL}?auth=failed` }),
-    (req: Request, res: Response) => {
-      const user = req.user as any;
-      const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
-      const token = signToken(payload);
-      res.redirect(`${FRONTEND_URL}?token=${token}`);
+    (req: Request, res: Response, next) => {
+      passport.authenticate("google", { session: false, failureRedirect: `${FRONTEND_URL}?auth=failed` }, (err: any, user: any) => {
+        if (err) {
+          console.error("Google OAuth error:", err);
+          res.redirect(`${FRONTEND_URL}?auth=error`);
+          return;
+        }
+        if (!user) {
+          res.redirect(`${FRONTEND_URL}?auth=failed`);
+          return;
+        }
+        try {
+          const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
+          const token = signToken(payload);
+          res.redirect(`${FRONTEND_URL}?token=${token}`);
+        } catch (e) {
+          console.error("Google callback error:", e);
+          res.redirect(`${FRONTEND_URL}?auth=error`);
+        }
+      })(req, res, next);
     },
   );
 }
@@ -94,12 +113,26 @@ if (process.env.GITHUB_CLIENT_ID) {
 
   router.get(
     "/github/callback",
-    passport.authenticate("github", { session: false, failureRedirect: `${FRONTEND_URL}?auth=failed` }),
-    (req: Request, res: Response) => {
-      const user = req.user as any;
-      const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
-      const token = signToken(payload);
-      res.redirect(`${FRONTEND_URL}?token=${token}`);
+    (req: Request, res: Response, next) => {
+      passport.authenticate("github", { session: false, failureRedirect: `${FRONTEND_URL}?auth=failed` }, (err: any, user: any) => {
+        if (err) {
+          console.error("GitHub OAuth error:", err);
+          res.redirect(`${FRONTEND_URL}?auth=error`);
+          return;
+        }
+        if (!user) {
+          res.redirect(`${FRONTEND_URL}?auth=failed`);
+          return;
+        }
+        try {
+          const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
+          const token = signToken(payload);
+          res.redirect(`${FRONTEND_URL}?token=${token}`);
+        } catch (e) {
+          console.error("GitHub callback error:", e);
+          res.redirect(`${FRONTEND_URL}?auth=error`);
+        }
+      })(req, res, next);
     },
   );
 }
