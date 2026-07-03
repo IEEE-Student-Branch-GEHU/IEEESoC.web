@@ -47,8 +47,19 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
     } catch (err: any) {
       console.error("Failed to load live rankings:", err);
       setError(err.message || "Failed to load live rankings.");
-      
-      // Fallback to local storage or defaults
+
+      // Fallback to admin API, then localStorage, then defaults
+      try {
+        const adminRes = await fetch("/api/admin/public/keepers");
+        const adminData = await adminRes.json();
+        if (adminData.success && adminData.keepers?.length) {
+          setKeepers(adminData.keepers);
+          return;
+        }
+      } catch {
+        // Admin API unavailable
+      }
+
       const saved = localStorage.getItem("hall_chronicles_keepers");
       if (saved) {
         try {

@@ -15,7 +15,7 @@ import CrateView from "./components/CrateView";
 import LeaderboardView from "./components/LeaderboardView";
 import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
-import AdminView from "./components/AdminView";
+import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
 import ProfileDropdown from "./components/ProfileDropdown";
 
@@ -121,6 +121,19 @@ export default function App() {
       setArtifacts(DEFAULT_ARTIFACTS);
     }
   }, [activeTab]); // Fetch fresh values on tab switches
+
+  // Hash-based routing for direct URL access (e.g., /#/admin)
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash.startsWith("/admin")) {
+      handleTabChange("admin");
+    }
+  }, []);
+
+  useEffect(() => {
+    const hash = activeTab === "admin" ? "#/admin" : "#/";
+    window.location.hash = hash;
+  }, [activeTab]);
 
   // Helper to add log statement dynamically across all subcomponents
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
@@ -343,13 +356,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <AdminView 
-                onAddLogMessage={handleAddNewLog}
-                onArtifactsChange={(updatedArtifacts) => {
-                  setArtifacts(updatedArtifacts);
-                  localStorage.setItem("hall_chronicles_artifacts", JSON.stringify(updatedArtifacts));
-                }}
-              />
+              <AdminDashboard onAddLogMessage={handleAddNewLog} />
             </motion.div>
           )}
         </AnimatePresence>
