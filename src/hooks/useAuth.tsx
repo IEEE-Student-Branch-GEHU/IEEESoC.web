@@ -38,6 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthToken = params.get("token");
+    if (oauthToken) {
+      sessionStorage.setItem("ieeesoc_token", oauthToken);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     const token = sessionStorage.getItem("ieeesoc_token");
     if (token) {
       fetchProfile(token).then((ok) => {

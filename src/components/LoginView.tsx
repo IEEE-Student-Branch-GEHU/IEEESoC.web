@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
 import { useAuth } from "../hooks/useAuth";
-import { LogIn, X, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { LogIn, X, Eye, EyeOff, ShieldCheck, Chrome, Github } from "lucide-react";
 
 interface LoginViewProps {
   onClose?: () => void;
@@ -116,6 +116,32 @@ export default function LoginView({ onClose, onSuccess, returnTo }: LoginViewPro
             {isSubmitting ? "Authenticating..." : "Enter the Sanctum"}
           </button>
         </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-on-surface/10"></div>
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-surface px-3 font-mono text-[10px] text-on-surface/40 uppercase tracking-wider">or continue with</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <a
+            href="/api/auth/google"
+            className="flex items-center justify-center gap-2 px-6 py-3 border border-on-surface/20 hover:border-on-surface/40 bg-surface hover:bg-surface-container-high transition-colors rounded font-mono text-xs font-semibold uppercase tracking-wider text-on-surface cursor-pointer"
+          >
+            <Chrome className="w-4 h-4" />
+            Sign in with Google
+          </a>
+          <a
+            href="/api/auth/github"
+            className="flex items-center justify-center gap-2 px-6 py-3 border border-on-surface/20 hover:border-on-surface/40 bg-surface hover:bg-surface-container-high transition-colors rounded font-mono text-xs font-semibold uppercase tracking-wider text-on-surface cursor-pointer"
+          >
+            <Github className="w-4 h-4" />
+            Sign in with GitHub
+          </a>
+        </div>
       </motion.div>
     </motion.div>
   );
