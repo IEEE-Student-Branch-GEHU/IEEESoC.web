@@ -33,6 +33,22 @@ export interface TelemetryLog {
   type: "info" | "warning" | "success" | "critical";
 }
 
+export interface PortalUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "contributor" | "admin";
+  githubUsername?: string;
+  avatarUrl?: string;
+  createdAt?: string;
+}
+
+export interface UserStats {
+  score: number;
+  mergedPRs: number;
+  openPRs: number;
+}
+
 export interface BotSimulatorState {
   botName: string;
   role: string;

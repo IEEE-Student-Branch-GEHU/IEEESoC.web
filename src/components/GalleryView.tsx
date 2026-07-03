@@ -300,7 +300,7 @@ export default function GalleryView({ onEnterLyceum, onExploreCrate }: GalleryVi
 
             <button 
               onClick={onExploreCrate}
-              className="relative relative-z-10 group px-8 py-4 notched-card bg-on-surface hover:bg-neutral-800 transition-colors cursor-pointer text-surface font-mono text-xs font-semibold uppercase tracking-wider"
+              className="relative relative-z-10 group px-8 py-4 notched-card bg-surface hover:bg-surface-container-high transition-colors cursor-pointer text-on-surface font-mono text-xs font-semibold uppercase tracking-wider"
             >
               Analyze Vault
             </button>
