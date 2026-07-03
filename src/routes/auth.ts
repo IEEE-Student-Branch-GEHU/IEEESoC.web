@@ -169,19 +169,30 @@ router.post("/setup", async (req: Request, res: Response) => {
   try {
     const existingAdmin = await PortalUser.findOne({ role: "admin" });
     if (existingAdmin) {
-      res.status(400).json({ error: "An admin already exists. Use signup with admin credentials instead." });
+      res.status(400).json({ error: "An admin already exists" });
       return;
     }
 
     const { name, email, password, githubUsername } = req.body;
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "name, email, and password are required" });
+    if (!email || !password) {
+      res.status(400).json({ error: "email and password are required" });
       return;
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await PortalUser.create({ name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername });
+    const existing = await PortalUser.findOne({ email: email.toLowerCase() });
 
+    if (existing) {
+      existing.passwordHash = passwordHash;
+      existing.role = "admin";
+      if (name) existing.name = name;
+      if (githubUsername) existing.githubUsername = githubUsername;
+      await existing.save();
+      res.json({ success: true, user: { id: existing._id, name: existing.name, email: existing.email, role: existing.role } });
+      return;
+    }
+
+    const user = await PortalUser.create({ name: name || "Admin", email: email.toLowerCase(), passwordHash, role: "admin", githubUsername });
     res.status(201).json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err: any) {
     console.error("Setup error:", err);
