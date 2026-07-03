@@ -123,12 +123,14 @@ export default function App() {
   }, [activeTab]); // Fetch fresh values on tab switches
 
   // Hash-based routing for direct URL access (e.g., /#/admin)
+  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
   useEffect(() => {
+    if (loading) return;
     const hash = window.location.hash.replace("#", "");
     if (hash.startsWith("/admin")) {
       handleTabChange("admin");
     }
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     const hash = activeTab === "admin" ? "#/admin" : "#/";
