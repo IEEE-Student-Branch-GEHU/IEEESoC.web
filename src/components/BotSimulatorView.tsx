@@ -23,23 +23,42 @@ export default function BotSimulatorView({ logs, onAddLogMessage, onClearLogs }:
   const [overclockActive, setOverclockActive] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(false);
 
-  // Load baseline values from Admin Console if set
+  // Load baseline values from server API, fallback to localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("hall_chronicles_bot_config");
-    if (saved) {
+    const fetchConfig = async () => {
       try {
-        const config = JSON.parse(saved);
-        if (config.hydraulicPressure !== undefined) setHydraulicPressure(config.hydraulicPressure);
-        if (config.laserIntensity !== undefined) setLaserIntensity(config.laserIntensity);
-        if (config.opticArraySync !== undefined) setOpticArraySync(config.opticArraySync);
-        if (config.coreTemperature !== undefined) setCoreTemperature(config.coreTemperature);
-        if (config.overclockActive !== undefined) setOverclockActive(config.overclockActive);
-        
-        onAddLogMessage("Gilded Guardian synchronized with active Admin Overlord configuration.", "success");
-      } catch (e) {
-        // Fallback
+        const res = await fetch("/api/admin/public/bot-config");
+        const data = await res.json();
+        if (data.success && data.config) {
+          const c = data.config;
+          if (c.hydraulicPressure !== undefined) setHydraulicPressure(c.hydraulicPressure / 50);
+          if (c.laserIntensity !== undefined) setLaserIntensity(c.laserIntensity);
+          if (c.opticArraySync !== undefined) setOpticArraySync(c.opticArraySync);
+          if (c.coreTemperature !== undefined) setCoreTemperature(c.coreTemperature);
+          if (c.overclockActive !== undefined) setOverclockActive(c.overclockActive);
+          onAddLogMessage("Gilded Guardian synchronized with server configuration.", "success");
+          return;
+        }
+      } catch {
+        // Server unavailable
       }
-    }
+      // Fallback to localStorage
+      const saved = localStorage.getItem("hall_chronicles_bot_config");
+      if (saved) {
+        try {
+          const config = JSON.parse(saved);
+          if (config.hydraulicPressure !== undefined) setHydraulicPressure(config.hydraulicPressure);
+          if (config.laserIntensity !== undefined) setLaserIntensity(config.laserIntensity);
+          if (config.opticArraySync !== undefined) setOpticArraySync(config.opticArraySync);
+          if (config.coreTemperature !== undefined) setCoreTemperature(config.coreTemperature);
+          if (config.overclockActive !== undefined) setOverclockActive(config.overclockActive);
+          onAddLogMessage("Gilded Guardian synchronized with active Admin Overlord configuration.", "success");
+        } catch {
+          // Fallback
+        }
+      }
+    };
+    fetchConfig();
   }, []);
 
   const logsEndRef = useRef<HTMLDivElement>(null);

@@ -40,6 +40,36 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
   const [newPurity, setNewPurity] = useState(95);
   const [newMesh, setNewMesh] = useState(6);
 
+  // Fetch from server API on mount, fallback to localStorage
+  useEffect(() => {
+    const fetchArtifacts = async () => {
+      try {
+        const res = await fetch("/api/admin/public/artifacts");
+        const data = await res.json();
+        if (data.success && data.artifacts?.length) {
+          const mapped = data.artifacts.map((a: any) => ({
+            id: a._id || a.id,
+            code: a.code,
+            name: a.name,
+            description: a.description,
+            category: a.category,
+            imageUrl: a.imageUrl,
+            loadIndex: a.loadIndex,
+            purityIndex: a.purityIndex,
+            cyberMeshLevel: a.cyberMeshLevel,
+            archivist: a.archivist,
+            dateCreated: a.dateCreated,
+          }));
+          setArtifacts(mapped);
+          localStorage.setItem("hall_chronicles_artifacts", JSON.stringify(mapped));
+        }
+      } catch {
+        // Server unavailable, use localStorage
+      }
+    };
+    fetchArtifacts();
+  }, []);
+
   // Persistence
   useEffect(() => {
     localStorage.setItem("hall_chronicles_artifacts", JSON.stringify(artifacts));
