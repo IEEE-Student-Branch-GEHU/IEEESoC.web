@@ -312,6 +312,10 @@ export default function App() {
             >
               <AdminView 
                 onAddLogMessage={handleAddNewLog}
+                onArtifactsChange={(updatedArtifacts) => {
+                  setArtifacts(updatedArtifacts);
+                  localStorage.setItem("hall_chronicles_artifacts", JSON.stringify(updatedArtifacts));
+                }}
               />
             </motion.div>
           )}
