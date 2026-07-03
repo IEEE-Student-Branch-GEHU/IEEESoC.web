@@ -165,4 +165,28 @@ router.patch("/me", authenticate, async (req: Request, res: Response) => {
   }
 });
 
+router.post("/setup", async (req: Request, res: Response) => {
+  try {
+    const existingAdmin = await PortalUser.findOne({ role: "admin" });
+    if (existingAdmin) {
+      res.status(400).json({ error: "An admin already exists. Use signup with admin credentials instead." });
+      return;
+    }
+
+    const { name, email, password, githubUsername } = req.body;
+    if (!name || !email || !password) {
+      res.status(400).json({ error: "name, email, and password are required" });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await PortalUser.create({ name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername });
+
+    res.status(201).json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  } catch (err: any) {
+    console.error("Setup error:", err);
+    res.status(500).json({ error: "Failed to create admin" });
+  }
+});
+
 export default router;
