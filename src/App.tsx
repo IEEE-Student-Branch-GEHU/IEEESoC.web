@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Compass, List, Play, Cpu, Heart, 
@@ -16,10 +16,18 @@ import LeaderboardView from "./components/LeaderboardView";
 import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminView from "./components/AdminView";
+import LoginView from "./components/LoginView";
+import ProfileDropdown from "./components/ProfileDropdown";
+
+// Auth
+import { useAuth } from "./hooks/useAuth";
 
 export default function App() {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin">("gallery");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [logs, setLogs] = useState<TelemetryLog[]>(CORE_TELEMETRIAL_LOGS_PRESET);
   const [activeFooterModal, setActiveFooterModal] = useState<"privacy" | "status" | "manual" | null>(null);
   const [isPopMode, setIsPopMode] = useState<boolean>(() => {
@@ -138,6 +146,40 @@ export default function App() {
     window.dispatchEvent(customEvent);
   };
 
+  const handleTabChange = useCallback((tab: string) => {
+    if (tab === "gallery") {
+      setActiveTab(tab as any);
+      return;
+    }
+    if (tab === "admin") {
+      if (!isAuthenticated) {
+        setPendingTab("admin");
+        setShowLoginModal(true);
+        return;
+      }
+      if (!isAdmin) {
+        handleAddNewLog("Access denied: Admin privileges required.", "critical");
+        return;
+      }
+      setActiveTab("admin");
+      return;
+    }
+    if (!isAuthenticated) {
+      setPendingTab(tab);
+      setShowLoginModal(true);
+      return;
+    }
+    setActiveTab(tab as any);
+  }, [isAuthenticated, isAdmin]);
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    if (pendingTab) {
+      handleTabChange(pendingTab);
+      setPendingTab(null);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-primary-container text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
       {/* GLOBAL SCENE LIGHT AMBIENCE */}
@@ -157,7 +199,7 @@ export default function App() {
         {/* Center Navigation Tabs */}
         <nav className="hidden md:flex gap-8 items-center bg-surface-container-low border border-on-surface/5 rounded-full px-5 py-1.5 h-11">
           <button 
-            onClick={() => setActiveTab("gallery")}
+            onClick={() => handleTabChange("gallery")}
             className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
               activeTab === "gallery" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
             }`}
@@ -169,7 +211,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("crate")}
+            onClick={() => handleTabChange("crate")}
             className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
               activeTab === "crate" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
             }`}
@@ -181,7 +223,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("leaderboard")}
+            onClick={() => handleTabChange("leaderboard")}
             className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
               activeTab === "leaderboard" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
             }`}
@@ -193,25 +235,13 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("bot")}
+            onClick={() => handleTabChange("bot")}
             className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
               activeTab === "bot" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
             }`}
           >
             Simulations
             {activeTab === "bot" && (
-              <motion.span layoutId="nav-glow" className="absolute bottom-0 inset-x-0 h-[2px] bg-on-surface" />
-            )}
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("admin")}
-            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
-              activeTab === "admin" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
-            }`}
-          >
-            Admin Panel
-            {activeTab === "admin" && (
               <motion.span layoutId="nav-glow" className="absolute bottom-0 inset-x-0 h-[2px] bg-on-surface" />
             )}
           </button>
@@ -233,6 +263,9 @@ export default function App() {
           >
             <span>{isPopMode ? "✨ POP ACTIVE" : "🎨 POP MODE"}</span>
           </button>
+
+          {/* Profile */}
+          <ProfileDropdown onAddLogMessage={handleAddNewLog} />
 
           {/* Access terminal action button */}
           <button 
@@ -326,7 +359,7 @@ export default function App() {
       <div className="bottom-nav-container">
         <nav className="nav-pill flex items-center justify-center gap-1 shadow-2xl border border-on-surface" id="bottom-nav">
           <button 
-            onClick={() => setActiveTab("crate")}
+            onClick={() => handleTabChange("crate")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
               activeTab === "crate" 
                 ? "bg-on-surface text-surface" 
@@ -337,7 +370,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("leaderboard")}
+            onClick={() => handleTabChange("leaderboard")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
               activeTab === "leaderboard" 
                 ? "bg-on-surface text-surface" 
@@ -348,7 +381,7 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab("bot")}
+            onClick={() => handleTabChange("bot")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
               activeTab === "bot" 
                 ? "bg-on-surface text-surface" 
@@ -356,17 +389,6 @@ export default function App() {
             }`}
           >
             <Cpu className="w-3.5 h-3.5" /> Bot Simulator
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("admin")}
-            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
-              activeTab === "admin" 
-                ? "bg-on-surface text-surface" 
-                : "text-on-surface hover:bg-surface-container-high"
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" /> Admin Console
           </button>
         </nav>
       </div>
@@ -401,6 +423,12 @@ export default function App() {
             >
               Manual
             </button>
+            <button 
+              onClick={() => handleTabChange("admin")}
+              className="hover:underline hover:text-on-surface uppercase tracking-wider cursor-pointer opacity-50 hover:opacity-100 text-[9px]"
+            >
+              Admin
+            </button>
           </div>
         </div>
       </footer>
@@ -413,6 +441,16 @@ export default function App() {
         onTriggerOverclock={handleTerminalOverclock}
         onAddLogMessage={handleAddNewLog}
       />
+
+      {/* LOGIN MODAL */}
+      <AnimatePresence>
+        {showLoginModal && (
+          <LoginView
+            onClose={() => { setShowLoginModal(false); setPendingTab(null); }}
+            onSuccess={handleLoginSuccess}
+          />
+        )}
+      </AnimatePresence>
 
       {/* MODAL: INFO POPOVERS (Privacy, Status, Manual) */}
       <AnimatePresence>
