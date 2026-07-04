@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeeperLeaderboardRow } from "../types";
-import { ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
 import { 
   Award, Search, ArrowUpDown, ChevronUp, UserPlus, Heart, 
   ShieldAlert, RefreshCw, Sparkles, X, PlusCircle 
@@ -12,7 +12,22 @@ interface LeaderboardViewProps {
 }
 
 export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProps) {
-  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>([]);
+  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(() => {
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_keepers");
+      return [];
+    }
+    const saved = localStorage.getItem("hall_chronicles_keepers");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return [];
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,12 +75,15 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
         // Admin API unavailable
       }
 
-      const saved = localStorage.getItem("hall_chronicles_keepers");
-      if (saved) {
-        try {
-          setKeepers(JSON.parse(saved));
-        } catch (e) {
-          setKeepers([]);
+      const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+      if (cachedVersion === String(CACHE_VERSION)) {
+        const saved = localStorage.getItem("hall_chronicles_keepers");
+        if (saved) {
+          try {
+            setKeepers(JSON.parse(saved));
+          } catch (e) {
+            setKeepers([]);
+          }
         }
       }
     } finally {

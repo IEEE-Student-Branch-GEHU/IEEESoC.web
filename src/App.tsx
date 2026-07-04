@@ -8,6 +8,7 @@ import {
 
 // Types & Data
 import { TelemetryLog, ChronicleArtifact } from "./types";
+import { CACHE_VERSION } from "./data";
 
 // Sub-components
 import GalleryView from "./components/GalleryView";
@@ -109,6 +110,12 @@ export default function App() {
   const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>([]);
 
   useEffect(() => {
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_artifacts");
+      localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
+      return;
+    }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
