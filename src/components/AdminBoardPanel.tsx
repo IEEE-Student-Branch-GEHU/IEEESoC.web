@@ -32,13 +32,16 @@ export default function AdminBoardPanel({ onAddLogMessage }: Props) {
   const [editing, setEditing] = useState<Keeper | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  const token = sessionStorage.getItem("ieeesoc_token");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const getHeaders = () => {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    const token = sessionStorage.getItem("ieeesoc_token");
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  };
 
   const fetchKeepers = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/keepers`, { headers });
+      const res = await fetch(`${API}/keepers`, { headers: getHeaders() });
       const data = await res.json();
       if (data.success) setKeepers(data.keepers);
     } catch {
@@ -66,7 +69,7 @@ export default function AdminBoardPanel({ onAddLogMessage }: Props) {
     try {
       const url = editing ? `${API}/keepers/${editing._id}` : `${API}/keepers`;
       const method = editing ? "PUT" : "POST";
-      const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
+      const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(form) });
       const data = await res.json();
       if (!data.success) { onAddLogMessage(data.error || "Failed to save keeper", "critical"); return; }
       onAddLogMessage(`Keeper ${editing ? "updated" : "created"}: ${form.name}`, "success");
@@ -80,7 +83,7 @@ export default function AdminBoardPanel({ onAddLogMessage }: Props) {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete keeper "${name}"?`)) return;
     try {
-      const res = await fetch(`${API}/keepers/${id}`, { method: "DELETE", headers });
+      const res = await fetch(`${API}/keepers/${id}`, { method: "DELETE", headers: getHeaders() });
       const data = await res.json();
       if (!data.success) { onAddLogMessage("Failed to delete keeper", "critical"); return; }
       onAddLogMessage(`Keeper deleted: ${name}`, "warning");

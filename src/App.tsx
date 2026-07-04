@@ -122,22 +122,6 @@ export default function App() {
     }
   }, [activeTab]); // Fetch fresh values on tab switches
 
-  // Hash-based routing for direct URL access (e.g., /#/admin)
-  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
-  useEffect(() => {
-    if (loading) return;
-    const hash = window.location.hash.replace("#", "");
-    if (hash.startsWith("/admin")) {
-      handleTabChange("admin");
-    }
-  }, [loading]);
-
-  useEffect(() => {
-    if (loading) return;
-    const hash = activeTab === "admin" ? "#/admin" : "#/";
-    window.location.hash = hash;
-  }, [activeTab, loading]);
-
   // Helper to add log statement dynamically across all subcomponents
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
     const timestamp = `[${new Date().toTimeString().split(" ")[0]}]`;
@@ -186,15 +170,34 @@ export default function App() {
       return;
     }
     setActiveTab(tab as any);
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated, isAdmin, handleAddNewLog]);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = useCallback(() => {
     setShowLoginModal(false);
-    if (pendingTab) {
-      handleTabChange(pendingTab);
-      setPendingTab(null);
+    setPendingTab((prev) => {
+      if (prev) {
+        // Directly set the tab — auth state is now valid after login
+        setActiveTab(prev as any);
+      }
+      return null;
+    });
+  }, []);
+
+  // Hash-based routing for direct URL access (e.g., /#/admin)
+  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.replace("#", "");
+    if (hash.startsWith("/admin")) {
+      handleTabChange("admin");
     }
-  };
+  }, [loading, handleTabChange]);
+
+  useEffect(() => {
+    if (loading) return;
+    const hash = activeTab === "admin" ? "#/admin" : "#/";
+    window.location.hash = hash;
+  }, [activeTab, loading]);
 
   return (
     <div className="relative min-h-screen bg-primary-container text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
