@@ -203,11 +203,14 @@ export default function App() {
         handleTabChange("admin");
       } else if (hash.startsWith("/profile")) {
         handleTabChange("profile");
+      } else if (hash.startsWith("/crate")) {
+        handleTabChange("crate");
+      } else if (hash.startsWith("/leaderboard")) {
+        handleTabChange("leaderboard");
+      } else if (hash.startsWith("/bot")) {
+        handleTabChange("bot");
       } else {
-        // If hash is cleared or empty, reset from profile/admin back to gallery
-        if (activeTab === "admin" || activeTab === "profile") {
-          setActiveTab("gallery");
-        }
+        handleTabChange("gallery");
       }
     };
 
@@ -217,13 +220,19 @@ export default function App() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [loading, activeTab, handleTabChange]);
+  }, [loading, handleTabChange]);
 
   // Synchronize activeTab back to the URL hash
   useEffect(() => {
     if (loading) return;
     const currentHash = window.location.hash;
-    const targetHash = activeTab === "admin" ? "#/admin" : activeTab === "profile" ? "#/profile" : "#/";
+    let targetHash = "#/";
+    if (activeTab === "admin") targetHash = "#/admin";
+    else if (activeTab === "profile") targetHash = "#/profile";
+    else if (activeTab === "crate") targetHash = "#/crate";
+    else if (activeTab === "leaderboard") targetHash = "#/leaderboard";
+    else if (activeTab === "bot") targetHash = "#/bot";
+
     if (currentHash !== targetHash) {
       window.location.hash = targetHash;
     }
