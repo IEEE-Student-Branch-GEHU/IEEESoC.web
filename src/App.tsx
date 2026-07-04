@@ -19,7 +19,6 @@ import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
 import ProfileView from "./components/ProfileView";
-import SearchPopover from "./components/SearchPopover";
 
 // Auth
 import { useAuth } from "./hooks/useAuth";
@@ -296,8 +295,7 @@ export default function App() {
             <span>{isPopMode ? "✨ POP ACTIVE" : "🎨 POP MODE"}</span>
           </button>
 
-          {/* Contributor Search */}
-          {isAuthenticated && <SearchPopover />}
+
 
           {/* Profile */}
           {isAuthenticated && user && (
