@@ -5,6 +5,7 @@ import {
   Edit2, Lock, LogOut, Loader2, Save, X, Search
 } from "lucide-react";
 import type { PortalUser } from "../types";
+import LanyardCard from "./LanyardCard";
 
 interface Props {
   onAddLogMessage: (msg: string, type: "info" | "warning" | "success" | "critical") => void;
@@ -141,10 +142,12 @@ export default function ProfileView({ onAddLogMessage }: Props) {
 
   return (
     <div className="min-h-screen bg-primary-container pt-28 pb-20 px-4 md:px-margin-desktop">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* PROFILE HEADER CARD */}
-        <div className="notched-card bg-surface border border-on-surface/10 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-xl">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* PROFILE HEADER CARD */}
+            <div className="notched-card bg-surface border border-on-surface/10 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-xl">
           <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-surface-container-high border border-on-surface/20 flex items-center justify-center overflow-hidden shrink-0">
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -364,6 +367,13 @@ export default function ProfileView({ onAddLogMessage }: Props) {
         </div>
 
       </div>
+
+      {/* LANYARD CARD SHOWCASE (Right, 1/3 width on desktop) */}
+      <div className="space-y-3">
+        <LanyardCard />
+      </div>
     </div>
-  );
+  </div>
+</div>
+);
 }
