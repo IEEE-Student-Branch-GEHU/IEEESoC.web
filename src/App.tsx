@@ -193,22 +193,40 @@ export default function App() {
     });
   }, []);
 
-  // Hash-based routing for direct URL access (e.g., /#/admin or /#/profile)
-  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
+  // Synchronize the URL hash with activeTab state using hashchange listener
   useEffect(() => {
     if (loading) return;
-    const hash = window.location.hash.replace("#", "");
-    if (hash.startsWith("/admin")) {
-      handleTabChange("admin");
-    } else if (hash.startsWith("/profile")) {
-      handleTabChange("profile");
-    }
-  }, [loading, handleTabChange]);
 
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash.startsWith("/admin")) {
+        handleTabChange("admin");
+      } else if (hash.startsWith("/profile")) {
+        handleTabChange("profile");
+      } else {
+        // If hash is cleared or empty, reset from profile/admin back to gallery
+        if (activeTab === "admin" || activeTab === "profile") {
+          setActiveTab("gallery");
+        }
+      }
+    };
+
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, [loading, activeTab, handleTabChange]);
+
+  // Synchronize activeTab back to the URL hash
   useEffect(() => {
     if (loading) return;
-    const hash = activeTab === "admin" ? "#/admin" : activeTab === "profile" ? "#/profile" : "#/";
-    window.location.hash = hash;
+    const currentHash = window.location.hash;
+    const targetHash = activeTab === "admin" ? "#/admin" : activeTab === "profile" ? "#/profile" : "#/";
+    if (currentHash !== targetHash) {
+      window.location.hash = targetHash;
+    }
   }, [activeTab, loading]);
 
   return (
