@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Compass, List, Play, Cpu, Heart, 
+import {
+  Compass, List, Play, Cpu, Heart,
   Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive, Sliders
 } from "lucide-react";
 
@@ -18,6 +18,7 @@ import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminView from "./components/AdminView";
 import LoginView from "./components/LoginView";
 import ProfileDropdown from "./components/ProfileDropdown";
+import GreekMythologyBackground from "./components/GreekMythologyBackground";
 
 // Auth
 import { useAuth } from "./hooks/useAuth";
@@ -34,33 +35,58 @@ export default function App() {
     return localStorage.getItem("ieeesoc_pop_mode") === "true";
   });
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!overlayRef.current) return;
+      const scrollY = window.scrollY;
+      const maxOpacity = 0.28;
+      const fadeStart = 40;
+      const fadeEnd = 400;
+
+      let opacity = 0;
+      if (scrollY > fadeStart) {
+        opacity = Math.min(((scrollY - fadeStart) / (fadeEnd - fadeStart)) * maxOpacity, maxOpacity);
+      }
+      overlayRef.current.style.opacity = opacity.toString();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   // Play a synthesized pop sound using Web Audio API
   const playPopChime = (active: boolean) => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const now = audioCtx.currentTime;
-      
+
       if (active) {
         // Upward energetic chord
         const osc1 = audioCtx.createOscillator();
         const osc2 = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        
+
         osc1.type = "sine";
         osc1.frequency.setValueAtTime(523.25, now); // C5
         osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.15); // C6
-        
+
         osc2.type = "triangle";
         osc2.frequency.setValueAtTime(659.25, now); // E5
         osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.15); // E6
-        
+
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-        
+
         osc1.connect(gain);
         osc2.connect(gain);
         gain.connect(audioCtx.destination);
-        
+
         osc1.start(now);
         osc2.start(now);
         osc1.stop(now + 0.25);
@@ -69,17 +95,17 @@ export default function App() {
         // Soft bubble pop whistle
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        
+
         osc.type = "sine";
         osc.frequency.setValueAtTime(587.33, now); // D5
         osc.frequency.exponentialRampToValueAtTime(293.66, now + 0.18); // D4
-        
+
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        
+
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        
+
         osc.start(now);
         osc.stop(now + 0.2);
       }
@@ -181,15 +207,30 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-primary-container text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
+    <div className="relative min-h-screen bg-transparent text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
+      {/* 3D GREEK MYTHOLOGY BACKGROUND */}
+      <GreekMythologyBackground />
+
+      {/* DYNAMIC SCROLL READABILITY OVERLAY */}
+      <div
+        ref={overlayRef}
+        id="scroll-readability-overlay"
+        className="fixed inset-0 pointer-events-none transition-opacity duration-150 ease-out"
+        style={{
+          zIndex: 5,
+          background: "radial-gradient(circle at 50% 50%, rgba(28, 28, 22, 0.12) 0%, rgba(28, 28, 22, 0.28) 100%)",
+          opacity: 0,
+        }}
+      />
+
       {/* GLOBAL SCENE LIGHT AMBIENCE */}
       <div className="absolute inset-x-0 top-0 h-screen pointer-events-none putty-overlay z-0"></div>
 
       {/* FIXED TOP HEADER */}
       <header className="fixed top-0 w-full flex justify-between items-center px-4 md:px-margin-desktop py-5 z-40 bg-surface/80 backdrop-blur-sm border-b border-on-surface/5">
-        
+
         {/* Logo / Brand */}
-        <div 
+        <div
           onClick={() => setActiveTab("gallery")}
           className="font-serif text-2xl md:text-3xl text-on-surface tracking-tighter cursor-pointer hover:opacity-85 select-none font-bold"
         >
@@ -198,11 +239,10 @@ export default function App() {
 
         {/* Center Navigation Tabs */}
         <nav className="hidden md:flex gap-8 items-center bg-surface-container-low border border-on-surface/5 rounded-full px-5 py-1.5 h-11">
-          <button 
+          <button
             onClick={() => handleTabChange("gallery")}
-            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
-              activeTab === "gallery" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
-            }`}
+            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${activeTab === "gallery" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
+              }`}
           >
             Gallery
             {activeTab === "gallery" && (
@@ -210,11 +250,10 @@ export default function App() {
             )}
           </button>
 
-          <button 
+          <button
             onClick={() => handleTabChange("crate")}
-            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
-              activeTab === "crate" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
-            }`}
+            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${activeTab === "crate" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
+              }`}
           >
             Chronicles
             {activeTab === "crate" && (
@@ -222,11 +261,10 @@ export default function App() {
             )}
           </button>
 
-          <button 
+          <button
             onClick={() => handleTabChange("leaderboard")}
-            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
-              activeTab === "leaderboard" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
-            }`}
+            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${activeTab === "leaderboard" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
+              }`}
           >
             Honor Board
             {activeTab === "leaderboard" && (
@@ -234,11 +272,10 @@ export default function App() {
             )}
           </button>
 
-          <button 
+          <button
             onClick={() => handleTabChange("bot")}
-            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${
-              activeTab === "bot" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
-            }`}
+            className={`font-sans text-xs uppercase tracking-widest transition-all p-1.5 cursor-pointer relative ${activeTab === "bot" ? "text-on-surface font-semibold" : "text-on-surface-variant/60 hover:text-on-surface"
+              }`}
           >
             Simulations
             {activeTab === "bot" && (
@@ -250,15 +287,14 @@ export default function App() {
         {/* Actions cluster */}
         <div className="flex items-center gap-2 md:gap-3">
           {/* Pop touch toggle */}
-          <button 
+          <button
             type="button"
             id="pop-mode-toggle"
             onClick={togglePopMode}
-            className={`px-3 py-1.5 md:px-5 md:py-2.5 rounded-full font-sans text-[10px] md:text-xs uppercase tracking-widest cursor-pointer transition-all flex items-center gap-1.5 font-bold ${
-              isPopMode 
+            className={`px-3 py-1.5 md:px-5 md:py-2.5 rounded-full font-sans text-[10px] md:text-xs uppercase tracking-widest cursor-pointer transition-all flex items-center gap-1.5 font-bold ${isPopMode
                 ? "bg-yellow-400 text-black border-2 border-black animate-bounce shadow-[3px_3px_0px_#000]"
                 : "bg-surface-container-highest/60 hover:bg-surface-container-highest text-on-surface border border-on-surface/10 hover:border-on-surface/30"
-            }`}
+              }`}
             title="Toggle energetic Pop Touch Art theme!"
           >
             <span>{isPopMode ? "✨ POP ACTIVE" : "🎨 POP MODE"}</span>
@@ -268,7 +304,7 @@ export default function App() {
           <ProfileDropdown onAddLogMessage={handleAddNewLog} />
 
           {/* Access terminal action button */}
-          <button 
+          <button
             onClick={() => setIsTerminalOpen(true)}
             className="bg-on-surface text-surface hover:bg-neutral-800 active:scale-95 px-4 py-2 sm:px-7 sm:py-3 rounded-full font-mono text-[10px] uppercase tracking-widest cursor-pointer transition-all border border-on-surface flex items-center gap-2"
           >
@@ -288,9 +324,9 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.99 }}
               transition={{ duration: 0.4 }}
             >
-              <GalleryView 
-                onEnterLyceum={() => handleAddNewLog("Entered the Hall of Wisdom inner sanctum.", "info")} 
-                onExploreCrate={() => setActiveTab("crate")} 
+              <GalleryView
+                onEnterLyceum={() => handleAddNewLog("Entered the Hall of Wisdom inner sanctum.", "info")}
+                onExploreCrate={() => setActiveTab("crate")}
               />
             </motion.div>
           )}
@@ -327,7 +363,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <BotSimulatorView 
+              <BotSimulatorView
                 logs={logs}
                 onAddLogMessage={handleAddNewLog}
                 onClearLogs={handleClearLogs}
@@ -343,7 +379,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <AdminView 
+              <AdminView
                 onAddLogMessage={handleAddNewLog}
                 onArtifactsChange={(updatedArtifacts) => {
                   setArtifacts(updatedArtifacts);
@@ -358,35 +394,32 @@ export default function App() {
       {/* FLOAT BOTTOM PILL MENU Navigation - Authentic matching the HTML visual exactly */}
       <div className="bottom-nav-container">
         <nav className="nav-pill flex items-center justify-center gap-1 shadow-2xl border border-on-surface" id="bottom-nav">
-          <button 
+          <button
             onClick={() => handleTabChange("crate")}
-            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
-              activeTab === "crate" 
-                ? "bg-on-surface text-surface" 
+            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "crate"
+                ? "bg-on-surface text-surface"
                 : "text-on-surface hover:bg-surface-container-high"
-            }`}
+              }`}
           >
             <Compass className="w-3.5 h-3.5" /> Project Crate
           </button>
 
-          <button 
+          <button
             onClick={() => handleTabChange("leaderboard")}
-            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
-              activeTab === "leaderboard" 
-                ? "bg-on-surface text-surface" 
+            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "leaderboard"
+                ? "bg-on-surface text-surface"
                 : "text-on-surface hover:bg-surface-container-high"
-            }`}
+              }`}
           >
             <List className="w-3.5 h-3.5" /> Leaderboards
           </button>
 
-          <button 
+          <button
             onClick={() => handleTabChange("bot")}
-            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${
-              activeTab === "bot" 
-                ? "bg-on-surface text-surface" 
+            className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "bot"
+                ? "bg-on-surface text-surface"
                 : "text-on-surface hover:bg-surface-container-high"
-            }`}
+              }`}
           >
             <Cpu className="w-3.5 h-3.5" /> Bot Simulator
           </button>
@@ -396,7 +429,7 @@ export default function App() {
       {/* GLOBAL FOOTER */}
       <footer className="w-full py-16 border-t border-on-surface/10 bg-surface z-25 relative" id="global-footer">
         <div className="max-w-7xl mx-auto px-4 md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-8 font-mono text-xs text-on-surface-variant">
-          
+
           <div className="flex flex-col gap-1 items-center md:items-start text-center md:text-left">
             <span className="font-serif text-2xl font-bold leading-none text-on-surface">IEEESOC'26</span>
             <span className="opacity-60 text-[10px] tracking-wider font-semibold">
@@ -405,25 +438,25 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 md:gap-8 opacity-80 text-[11px]">
-            <button 
+            <button
               onClick={() => setActiveFooterModal("privacy")}
               className="hover:underline hover:text-on-surface uppercase tracking-wider cursor-pointer"
             >
               Privacy Protocol
             </button>
-            <button 
+            <button
               onClick={() => setActiveFooterModal("status")}
               className="hover:underline hover:text-on-surface uppercase tracking-wider cursor-pointer"
             >
               System Status
             </button>
-            <button 
+            <button
               onClick={() => setActiveFooterModal("manual")}
               className="hover:underline hover:text-on-surface uppercase tracking-wider cursor-pointer"
             >
               Manual
             </button>
-            <button 
+            <button
               onClick={() => handleTabChange("admin")}
               className="hover:underline hover:text-on-surface uppercase tracking-wider cursor-pointer opacity-50 hover:opacity-100 text-[9px]"
             >
@@ -434,7 +467,7 @@ export default function App() {
       </footer>
 
       {/* UNIX COMMAND SHELL OVERLAY */}
-      <AccessTerminalModal 
+      <AccessTerminalModal
         isOpen={isTerminalOpen}
         onClose={() => setIsTerminalOpen(false)}
         artifacts={artifacts}
@@ -462,7 +495,7 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="notched-card bg-surface border border-on-surface max-w-lg w-full p-6 relative space-y-4 shadow-2xl"
             >
-              <button 
+              <button
                 onClick={() => setActiveFooterModal(null)}
                 className="absolute right-4 top-4 text-on-surface hover:opacity-75 cursor-pointer"
               >
@@ -476,7 +509,7 @@ export default function App() {
                     <h3 className="font-serif text-xl font-bold uppercase tracking-wider">Privacy Protocol active</h3>
                   </div>
                   <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                    Under the strict classical secure block synchronization standard, the IEEESOC'26 Hall of Chronicles enforces complete local client compartmentalization. 
+                    Under the strict classical secure block synchronization standard, the IEEESOC'26 Hall of Chronicles enforces complete local client compartmentalization.
                   </p>
                   <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
                     No private keys, user data payloads, or cryptographic relics transit to third-party indexing servers. All calibrations, chronicle logs, and customizations reside safely inside your local storage vault index.
@@ -538,7 +571,7 @@ export default function App() {
               )}
 
               <div className="pt-4 flex justify-end">
-                <button 
+                <button
                   onClick={() => setActiveFooterModal(null)}
                   className="px-5 py-2 bg-on-surface text-surface font-mono text-[10px] uppercase font-bold cursor-pointer"
                 >

@@ -21,6 +21,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-github2": "^1.2.9",
     "@types/passport-google-oauth20": "^2.0.17",
+    "@types/three": "^0.185.0",
     "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -36,6 +37,7 @@
     "passport-google-oauth20": "^2.0.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "three": "^0.185.1",
     "vite": "^6.2.3"
   },
   "devDependencies": {
