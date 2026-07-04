@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Compass, List, Play, Cpu, Heart, 
-  Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive, Sliders
+  Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive, Sliders,
+  User
 } from "lucide-react";
 
 // Types & Data
@@ -17,14 +18,15 @@ import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
-import ProfileDropdown from "./components/ProfileDropdown";
+import ProfileView from "./components/ProfileView";
+import SearchPopover from "./components/SearchPopover";
 
 // Auth
 import { useAuth } from "./hooks/useAuth";
 
 export default function App() {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin">("gallery");
+  const { user, isAuthenticated, isAdmin, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin" | "profile">("gallery");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
@@ -164,6 +166,15 @@ export default function App() {
       setActiveTab("admin");
       return;
     }
+    if (tab === "profile") {
+      if (!isAuthenticated) {
+        setPendingTab("profile");
+        setShowLoginModal(true);
+        return;
+      }
+      setActiveTab("profile");
+      return;
+    }
     if (!isAuthenticated) {
       setPendingTab(tab);
       setShowLoginModal(true);
@@ -183,19 +194,21 @@ export default function App() {
     });
   }, []);
 
-  // Hash-based routing for direct URL access (e.g., /#/admin)
+  // Hash-based routing for direct URL access (e.g., /#/admin or /#/profile)
   // Wait for auth to finish loading so we don't show login modal for already-authenticated users
   useEffect(() => {
     if (loading) return;
     const hash = window.location.hash.replace("#", "");
     if (hash.startsWith("/admin")) {
       handleTabChange("admin");
+    } else if (hash.startsWith("/profile")) {
+      handleTabChange("profile");
     }
   }, [loading, handleTabChange]);
 
   useEffect(() => {
     if (loading) return;
-    const hash = activeTab === "admin" ? "#/admin" : "#/";
+    const hash = activeTab === "admin" ? "#/admin" : activeTab === "profile" ? "#/profile" : "#/";
     window.location.hash = hash;
   }, [activeTab, loading]);
 
@@ -283,8 +296,31 @@ export default function App() {
             <span>{isPopMode ? "✨ POP ACTIVE" : "🎨 POP MODE"}</span>
           </button>
 
+          {/* Contributor Search */}
+          {isAuthenticated && <SearchPopover />}
+
           {/* Profile */}
-          <ProfileDropdown onAddLogMessage={handleAddNewLog} />
+          {isAuthenticated && user && (
+            <button
+              onClick={() => handleTabChange("profile")}
+              className={`flex items-center gap-2 px-3 py-2 rounded-full border border-on-surface/10 hover:border-on-surface/30 transition-all cursor-pointer bg-surface/50 ${
+                activeTab === "profile" ? "bg-on-surface text-surface border-on-surface font-semibold" : ""
+              }`}
+            >
+              <div className="w-7 h-7 rounded-full bg-surface-container-high border border-on-surface/20 flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-on-surface/60" />
+                )}
+              </div>
+              <span className={`font-mono text-[10px] uppercase tracking-wider hidden sm:block ${
+                activeTab === "profile" ? "text-surface" : "text-on-surface"
+              }`}>
+                {user.name.split(" ")[0]}
+              </span>
+            </button>
+          )}
 
           {/* Access terminal action button */}
           <button 
@@ -363,6 +399,18 @@ export default function App() {
               transition={{ duration: 0.4 }}
             >
               <AdminDashboard onAddLogMessage={handleAddNewLog} />
+            </motion.div>
+          )}
+
+          {activeTab === "profile" && (
+            <motion.div
+              key="profile-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ProfileView onAddLogMessage={handleAddNewLog} />
             </motion.div>
           )}
         </AnimatePresence>
