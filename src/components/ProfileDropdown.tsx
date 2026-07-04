@@ -84,9 +84,9 @@ export default function ProfileDropdown({ onAddLogMessage }: ProfileDropdownProp
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-2 w-80 bg-surface border border-on-surface/10 notched-card shadow-2xl z-50 overflow-hidden"
           >
