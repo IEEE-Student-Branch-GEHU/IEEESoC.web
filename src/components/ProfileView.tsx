@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { 
   User, ShieldCheck, Mail, Github, Award, GitPullRequest, GitMerge,
-  Edit2, Lock, LogOut, Loader2, Save, X
+  Edit2, Lock, LogOut, Loader2, Save, X, Search
 } from "lucide-react";
+import type { PortalUser } from "../types";
 
 interface Props {
   onAddLogMessage: (msg: string, type: "info" | "warning" | "success" | "critical") => void;
@@ -23,6 +24,36 @@ export default function ProfileView({ onAddLogMessage }: Props) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSavingPass, setIsSavingPass] = useState(false);
+
+  // Contributor Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<PortalUser[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const token = sessionStorage.getItem("ieeesoc_token");
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) setSearchResults(data.users);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   if (!user) {
     return (
@@ -262,6 +293,61 @@ export default function ProfileView({ onAddLogMessage }: Props) {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* CONTRIBUTOR DIRECTORY SEARCH */}
+        <div className="notched-card bg-surface border border-on-surface/10 p-6 space-y-4 shadow-md">
+          <div className="flex items-center gap-2 pb-2 border-b border-on-surface/5">
+            <Search className="w-5 h-5 text-on-surface-variant" />
+            <h3 className="font-serif text-xl font-bold text-on-surface">Contributor Directory</h3>
+          </div>
+          
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/55" />
+            <input
+              type="text"
+              placeholder="Search archivist registry by name, email, or GitHub username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-surface-container border border-on-surface/10 rounded-lg font-mono text-xs text-on-surface outline-none focus:border-on-surface/30 transition-all"
+            />
+          </div>
+
+          {isSearching && (
+            <p className="font-mono text-xs text-on-surface-variant animate-pulse py-2">Searching archivist logs...</p>
+          )}
+
+          {!isSearching && searchResults.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {searchResults.map((u) => (
+                <div
+                  key={u.id}
+                  className="flex items-center gap-3 p-3 bg-surface-container-low/60 border border-on-surface/5 rounded-lg hover:border-on-surface/15 transition-all"
+                >
+                  <div className="w-8 h-8 rounded-full bg-surface-container-high border border-on-surface/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {u.avatarUrl ? (
+                      <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold uppercase text-on-surface-variant">
+                        {u.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-serif font-bold text-on-surface text-sm truncate">{u.name}</div>
+                    <div className="font-mono text-[9px] text-on-surface-variant/70 truncate">{u.email}</div>
+                    <div className="font-mono text-[8px] uppercase tracking-wider text-on-surface-variant/50 truncate">
+                      {u.role} {u.githubUsername && `· @${u.githubUsername}`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
+            <p className="font-mono text-xs text-on-surface-variant/60 py-2">No matching archivists found in the registry.</p>
+          )}
         </div>
 
         {/* SECURITY & LOGOUT ZONE */}
