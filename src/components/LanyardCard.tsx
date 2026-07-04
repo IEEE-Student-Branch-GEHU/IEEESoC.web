@@ -181,10 +181,8 @@ export default function LanyardCard() {
       drawCard(canvas, user, stats, ieeeImg, gehuImg, user?.avatarUrl ? avatarImg : null);
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.flipY = false;
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.repeat.x = -1;
-      tex.offset.x = 1;
+      tex.center.set(0.5, 0.5);
+      tex.rotation = Math.PI;
       setTexture(tex);
     };
 
