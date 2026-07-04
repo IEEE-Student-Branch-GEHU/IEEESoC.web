@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
-import { DEFAULT_ARTIFACTS, ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES } from "../data";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
   User, CheckCircle, Crosshair, Award, Sparkles, X, Heart
@@ -22,7 +22,7 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         // Fallback
       }
     }
-    return DEFAULT_ARTIFACTS;
+    return [];
   });
 
   const [searchQuery, setSearchQuery] = useState("");

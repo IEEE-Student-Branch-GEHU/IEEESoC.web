@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeeperLeaderboardRow } from "../types";
-import { DEFAULT_KEEPERS, ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES } from "../data";
 import { 
   Award, Search, ArrowUpDown, ChevronUp, UserPlus, Heart, 
   ShieldAlert, RefreshCw, Sparkles, X, PlusCircle 
@@ -12,7 +12,7 @@ interface LeaderboardViewProps {
 }
 
 export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProps) {
-  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(DEFAULT_KEEPERS);
+  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,10 +65,8 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
         try {
           setKeepers(JSON.parse(saved));
         } catch (e) {
-          setKeepers(DEFAULT_KEEPERS);
+          setKeepers([]);
         }
-      } else {
-        setKeepers(DEFAULT_KEEPERS);
       }
     } finally {
       setIsLoading(false);
@@ -81,7 +79,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
 
   // Persistence
   useEffect(() => {
-    if (keepers !== DEFAULT_KEEPERS) {
+    if (keepers.length > 0) {
       localStorage.setItem("hall_chronicles_keepers", JSON.stringify(keepers));
     }
   }, [keepers]);

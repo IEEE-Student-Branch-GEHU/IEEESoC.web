@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BotSimulatorState, TelemetryLog } from "../types";
-import { CORE_TELEMETRIAL_LOGS_PRESET, ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES } from "../data";
 import { 
   Play, RotateCcw, Zap, Thermometer, ShieldAlert, CheckCircle, 
   Settings, Power, HelpCircle, Activity, Gauge, Terminal, RefreshCw

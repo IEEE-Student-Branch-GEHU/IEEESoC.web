@@ -18,11 +18,6 @@ const withError = (res: Response, err: any, label: string) => {
 router.get("/public/artifacts", async (_req: Request, res: Response) => {
   try {
     const items = await Artifact.find().sort({ dateCreated: -1 }).lean();
-    if (items.length === 0) {
-      const { DEFAULT_ARTIFACTS } = await import("../../src/data");
-      res.json({ success: true, artifacts: DEFAULT_ARTIFACTS });
-      return;
-    }
     res.json({ success: true, artifacts: items });
   } catch (err) {
     withError(res, err, "fetch public artifacts");
@@ -32,11 +27,6 @@ router.get("/public/artifacts", async (_req: Request, res: Response) => {
 router.get("/public/keepers", async (_req: Request, res: Response) => {
   try {
     const items = await Keeper.find().sort({ chroniclesCount: -1 }).lean();
-    if (items.length === 0) {
-      const { DEFAULT_KEEPERS } = await import("../../src/data");
-      res.json({ success: true, keepers: DEFAULT_KEEPERS });
-      return;
-    }
     const ranked = items.map((k, i) => ({ rank: i + 1, ...k }));
     res.json({ success: true, keepers: ranked });
   } catch (err) {
