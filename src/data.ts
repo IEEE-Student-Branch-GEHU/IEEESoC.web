@@ -1,3 +1,5 @@
+export const CACHE_VERSION = 2;
+
 export const ARTIFACT_IMAGES = {
   column: "/images/column.png",
   castle: "/assets/architecture.png",

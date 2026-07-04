@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
-import { ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
   User, CheckCircle, Crosshair, Award, Sparkles, X, Heart
@@ -14,6 +14,12 @@ interface CrateViewProps {
 export default function CrateView({ onAddLogMessage }: CrateViewProps) {
   // Load initial artifacts from localStorage or defaults
   const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>(() => {
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_artifacts");
+      localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
+      return [];
+    }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
