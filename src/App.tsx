@@ -15,7 +15,7 @@ import CrateView from "./components/CrateView";
 import LeaderboardView from "./components/LeaderboardView";
 import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
-import AdminView from "./components/AdminView";
+import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
 import ProfileDropdown from "./components/ProfileDropdown";
 import GreekMythologyBackground from "./components/GreekMythologyBackground";
@@ -147,6 +147,21 @@ export default function App() {
       setArtifacts(DEFAULT_ARTIFACTS);
     }
   }, [activeTab]); // Fetch fresh values on tab switches
+
+  // Hash-based routing for direct URL access (e.g., /#/admin)
+  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.replace("#", "");
+    if (hash.startsWith("/admin")) {
+      handleTabChange("admin");
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const hash = activeTab === "admin" ? "#/admin" : "#/";
+    window.location.hash = hash;
+  }, [activeTab]);
 
   // Helper to add log statement dynamically across all subcomponents
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
@@ -292,8 +307,8 @@ export default function App() {
             id="pop-mode-toggle"
             onClick={togglePopMode}
             className={`px-3 py-1.5 md:px-5 md:py-2.5 rounded-full font-sans text-[10px] md:text-xs uppercase tracking-widest cursor-pointer transition-all flex items-center gap-1.5 font-bold ${isPopMode
-                ? "bg-yellow-400 text-black border-2 border-black animate-bounce shadow-[3px_3px_0px_#000]"
-                : "bg-surface-container-highest/60 hover:bg-surface-container-highest text-on-surface border border-on-surface/10 hover:border-on-surface/30"
+              ? "bg-yellow-400 text-black border-2 border-black animate-bounce shadow-[3px_3px_0px_#000]"
+              : "bg-surface-container-highest/60 hover:bg-surface-container-highest text-on-surface border border-on-surface/10 hover:border-on-surface/30"
               }`}
             title="Toggle energetic Pop Touch Art theme!"
           >
@@ -379,13 +394,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
             >
-              <AdminView
-                onAddLogMessage={handleAddNewLog}
-                onArtifactsChange={(updatedArtifacts) => {
-                  setArtifacts(updatedArtifacts);
-                  localStorage.setItem("hall_chronicles_artifacts", JSON.stringify(updatedArtifacts));
-                }}
-              />
+              <AdminDashboard onAddLogMessage={handleAddNewLog} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -397,8 +406,8 @@ export default function App() {
           <button
             onClick={() => handleTabChange("crate")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "crate"
-                ? "bg-on-surface text-surface"
-                : "text-on-surface hover:bg-surface-container-high"
+              ? "bg-on-surface text-surface"
+              : "text-on-surface hover:bg-surface-container-high"
               }`}
           >
             <Compass className="w-3.5 h-3.5" /> Project Crate
@@ -407,8 +416,8 @@ export default function App() {
           <button
             onClick={() => handleTabChange("leaderboard")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "leaderboard"
-                ? "bg-on-surface text-surface"
-                : "text-on-surface hover:bg-surface-container-high"
+              ? "bg-on-surface text-surface"
+              : "text-on-surface hover:bg-surface-container-high"
               }`}
           >
             <List className="w-3.5 h-3.5" /> Leaderboards
@@ -417,8 +426,8 @@ export default function App() {
           <button
             onClick={() => handleTabChange("bot")}
             className={`px-4 sm:px-6 py-2.5 flex items-center gap-2 rounded-full transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider cursor-pointer ${activeTab === "bot"
-                ? "bg-on-surface text-surface"
-                : "text-on-surface hover:bg-surface-container-high"
+              ? "bg-on-surface text-surface"
+              : "text-on-surface hover:bg-surface-container-high"
               }`}
           >
             <Cpu className="w-3.5 h-3.5" /> Bot Simulator

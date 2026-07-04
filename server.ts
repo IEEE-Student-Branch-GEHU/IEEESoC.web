@@ -9,6 +9,7 @@ import { connectDB } from "./src/config/db";
 import authRouter from "./src/routes/auth";
 import oauthRouter from "./src/routes/oauth";
 import usersRouter from "./src/routes/users";
+import adminRouter from "./src/routes/admin";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -32,6 +33,7 @@ app.use(passport.session());
 app.use("/api/auth", authRouter);
 app.use("/api/auth", oauthRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/admin", adminRouter);
 
 const isProduction = process.env.NODE_ENV === "production";
 
