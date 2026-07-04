@@ -226,6 +226,7 @@ export default function GreekMythologyBackground() {
     // Instantiate floating islands
     const islandLeft = createFloatingIsland(3.2, 2);
     islandLeft.position.set(-16.5, 3.2, -15);
+    islandLeft.userData = { yBase: 3.2 };
     worldGroup.add(islandLeft);
     floatingIslands.push(islandLeft);
 
@@ -242,6 +243,7 @@ export default function GreekMythologyBackground() {
 
     const islandRight = createFloatingIsland(2.5, 1);
     islandRight.position.set(16.0, 4.8, -13);
+    islandRight.userData = { yBase: 4.8 };
     worldGroup.add(islandRight);
     floatingIslands.push(islandRight);
 
@@ -253,6 +255,7 @@ export default function GreekMythologyBackground() {
     // Far background high island
     const islandFar = createFloatingIsland(4.5, 2);
     islandFar.position.set(-6, 9.5, -38);
+    islandFar.userData = { yBase: 9.5 };
     worldGroup.add(islandFar);
     floatingIslands.push(islandFar);
 
@@ -610,7 +613,6 @@ export default function GreekMythologyBackground() {
     const particleCount = isMobile ? 120 : 350;
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
-    const scaleFactors = new Float32Array(particleCount);
     const particleSpeeds = new Float32Array(particleCount);
 
     for (let i = 0; i < particleCount; i++) {
@@ -619,7 +621,6 @@ export default function GreekMythologyBackground() {
       positions[i * 3 + 1] = -3 + Math.random() * 18; // y
       positions[i * 3 + 2] = 10 - Math.random() * 35; // z
 
-      scaleFactors[i] = 0.5 + Math.random() * 1.5;
       particleSpeeds[i] = 0.015 + Math.random() * 0.025;
     }
 
@@ -666,8 +667,10 @@ export default function GreekMythologyBackground() {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      targetMouseXRef.current = (e.clientX / width - 0.5) * 2.0; // range [-1.0, 1.0]
-      targetMouseYRef.current = (e.clientY / height - 0.5) * 2.0;
+      const currentWidth = window.innerWidth;
+      const currentHeight = window.innerHeight;
+      targetMouseXRef.current = (e.clientX / currentWidth - 0.5) * 2.0; // range [-1.0, 1.0]
+      targetMouseYRef.current = (e.clientY / currentHeight - 0.5) * 2.0;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -678,6 +681,7 @@ export default function GreekMythologyBackground() {
     // --- ANIMATION LOOP ---
     let animationFrameId: number;
     let clock = new THREE.Clock();
+    const targetLookAt = new THREE.Vector3();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -699,14 +703,14 @@ export default function GreekMythologyBackground() {
       camera.position.x = mouseXRef.current * 1.5;
       
       // Look slightly at the statue pedestal
-      const targetLookAt = new THREE.Vector3(0, 0.5 - scrollPercent * 1.5, -12);
+      targetLookAt.set(0, 0.5 - scrollPercent * 1.5, -12);
       camera.lookAt(targetLookAt);
 
       // Slow bobbing of floating islands
       floatingIslands.forEach((island, index) => {
         const speed = 0.45 + index * 0.15;
         const amplitude = 0.12 + index * 0.04;
-        island.position.y += Math.sin(time * speed + index) * amplitude * 0.015;
+        island.position.y = island.userData.yBase + Math.sin(time * speed + index) * amplitude;
         
         // Very slow drift rotation
         island.rotation.y = Math.sin(time * 0.04 + index) * 0.05;
@@ -783,7 +787,27 @@ export default function GreekMythologyBackground() {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
       
-      // Dispose materials & geometries
+      // Traverse scene hierarchy to release WebGL assets on cleanup
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Line) {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach((mat) => {
+                mat.dispose();
+                if (mat.map) mat.map.dispose();
+              });
+            } else {
+              object.material.dispose();
+              if (object.material.map) object.material.map.dispose();
+            }
+          }
+        }
+      });
+
+      // Dispose top-level materials & geometries & textures explicitly
       marbleMaterial.dispose();
       goldenMaterial.dispose();
       glowingGoldMaterial.dispose();
