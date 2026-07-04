@@ -29,13 +29,16 @@ export default function AdminBotPanel({ onAddLogMessage }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const token = sessionStorage.getItem("ieeesoc_token");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const getHeaders = () => {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    const token = sessionStorage.getItem("ieeesoc_token");
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  };
 
   const fetchConfig = async () => {
     try {
-      const res = await fetch(`${API}/bot-config`, { headers });
+      const res = await fetch(`${API}/bot-config`, { headers: getHeaders() });
       const data = await res.json();
       if (data.success && data.config) {
         const { _id, createdAt, updatedAt, ...rest } = data.config;
@@ -53,7 +56,7 @@ export default function AdminBotPanel({ onAddLogMessage }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`${API}/bot-config`, { method: "PUT", headers, body: JSON.stringify(config) });
+      const res = await fetch(`${API}/bot-config`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(config) });
       const data = await res.json();
       if (!data.success) { onAddLogMessage("Failed to save bot config", "critical"); return; }
       onAddLogMessage("Bot configuration updated", "success");
