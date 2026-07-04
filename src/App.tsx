@@ -133,9 +133,10 @@ export default function App() {
   }, [loading]);
 
   useEffect(() => {
+    if (loading) return;
     const hash = activeTab === "admin" ? "#/admin" : "#/";
     window.location.hash = hash;
-  }, [activeTab]);
+  }, [activeTab, loading]);
 
   // Helper to add log statement dynamically across all subcomponents
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {

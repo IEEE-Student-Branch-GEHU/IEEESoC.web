@@ -5,7 +5,7 @@ import session from "express-session";
 import passport from "passport";
 import path from "path";
 import { fileURLToPath } from "url";
-import { connectDB } from "./src/config/db";
+import { connectDB, seedDevAdmin } from "./src/config/db";
 import authRouter from "./src/routes/auth";
 import oauthRouter from "./src/routes/oauth";
 import usersRouter from "./src/routes/users";
@@ -47,6 +47,7 @@ if (isProduction) {
 
 async function start() {
   await connectDB();
+  await seedDevAdmin();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT} [${isProduction ? "production" : "development"}]`);
   });
