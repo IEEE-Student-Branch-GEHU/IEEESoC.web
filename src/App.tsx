@@ -8,7 +8,6 @@ import {
 
 // Types & Data
 import { TelemetryLog, ChronicleArtifact } from "./types";
-import { CORE_TELEMETRIAL_LOGS_PRESET, DEFAULT_ARTIFACTS } from "./data";
 
 // Sub-components
 import GalleryView from "./components/GalleryView";
@@ -29,7 +28,7 @@ export default function App() {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
-  const [logs, setLogs] = useState<TelemetryLog[]>(CORE_TELEMETRIAL_LOGS_PRESET);
+  const [logs, setLogs] = useState<TelemetryLog[]>([]);
   const [activeFooterModal, setActiveFooterModal] = useState<"privacy" | "status" | "manual" | null>(null);
   const [isPopMode, setIsPopMode] = useState<boolean>(() => {
     return localStorage.getItem("ieeesoc_pop_mode") === "true";
@@ -110,18 +109,15 @@ export default function App() {
   const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>([]);
 
   useEffect(() => {
-    // Read from localStorage or assign default on mount
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
         setArtifacts(JSON.parse(saved));
       } catch (e) {
-        setArtifacts(DEFAULT_ARTIFACTS);
+        setArtifacts([]);
       }
-    } else {
-      setArtifacts(DEFAULT_ARTIFACTS);
     }
-  }, [activeTab]); // Fetch fresh values on tab switches
+  }, [activeTab]);
 
   // Helper to add log statement dynamically across all subcomponents
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
