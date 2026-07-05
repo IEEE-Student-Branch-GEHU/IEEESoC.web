@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import Artifact from "../models/Artifact";
 import Keeper from "../models/Keeper";
@@ -12,6 +13,26 @@ const withError = (res: Response, err: any, label: string) => {
   console.error(`Admin ${label} error:`, err);
   res.status(500).json({ error: `Failed to ${label}` });
 };
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isValidObjectId(id: string): boolean {
+  return mongoose.Types.ObjectId.isValid(id);
+}
+
+const ALLOWED_ARTIFACT_FIELDS = ["name", "code", "description", "imageUrl", "dateCreated", "status"];
+const ALLOWED_KEEPER_FIELDS = ["name", "role", "chroniclesCount", "reputationPoints", "imageUrl", "status"];
+const ALLOWED_USER_FIELDS = ["name", "role", "githubUsername", "password"];
+
+function pickFields(body: Record<string, any>, allowed: string[]): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key of allowed) {
+    if (body[key] !== undefined) result[key] = body[key];
+  }
+  return result;
+}
 
 // ─── Public endpoints (no auth needed) ───────────────────────────────
 
@@ -36,10 +57,11 @@ router.get("/public/keepers", async (_req: Request, res: Response) => {
 
 router.get("/public/bot-config", async (_req: Request, res: Response) => {
   try {
-    let config = await BotConfig.findOne();
-    if (!config) {
-      config = await BotConfig.create({});
-    }
+    let config = await BotConfig.findOneAndUpdate(
+      {},
+      { $setOnInsert: {} },
+      { upsert: true, new: true },
+    );
     res.json({ success: true, config });
   } catch (err) {
     withError(res, err, "fetch public bot config");
@@ -73,7 +95,12 @@ router.get("/artifacts", async (_req: Request, res: Response) => {
 
 router.post("/artifacts", async (req: Request, res: Response) => {
   try {
-    const artifact = await Artifact.create(req.body);
+    const data = pickFields(req.body, ALLOWED_ARTIFACT_FIELDS);
+    if (!data.name) {
+      res.status(400).json({ error: "name is required" });
+      return;
+    }
+    const artifact = await Artifact.create(data);
     res.status(201).json({ success: true, artifact });
   } catch (err: any) {
     if (err.code === 11000) {
@@ -86,7 +113,12 @@ router.post("/artifacts", async (req: Request, res: Response) => {
 
 router.put("/artifacts/:id", async (req: Request, res: Response) => {
   try {
-    const artifact = await Artifact.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid artifact ID" });
+      return;
+    }
+    const data = pickFields(req.body, ALLOWED_ARTIFACT_FIELDS);
+    const artifact = await Artifact.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
     if (!artifact) {
       res.status(404).json({ error: "Artifact not found" });
       return;
@@ -99,6 +131,10 @@ router.put("/artifacts/:id", async (req: Request, res: Response) => {
 
 router.delete("/artifacts/:id", async (req: Request, res: Response) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid artifact ID" });
+      return;
+    }
     const artifact = await Artifact.findByIdAndDelete(req.params.id);
     if (!artifact) {
       res.status(404).json({ error: "Artifact not found" });
@@ -124,7 +160,12 @@ router.get("/keepers", async (_req: Request, res: Response) => {
 
 router.post("/keepers", async (req: Request, res: Response) => {
   try {
-    const keeper = await Keeper.create(req.body);
+    const data = pickFields(req.body, ALLOWED_KEEPER_FIELDS);
+    if (!data.name) {
+      res.status(400).json({ error: "name is required" });
+      return;
+    }
+    const keeper = await Keeper.create(data);
     res.status(201).json({ success: true, keeper });
   } catch (err) {
     withError(res, err, "create keeper");
@@ -133,7 +174,12 @@ router.post("/keepers", async (req: Request, res: Response) => {
 
 router.put("/keepers/:id", async (req: Request, res: Response) => {
   try {
-    const keeper = await Keeper.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid keeper ID" });
+      return;
+    }
+    const data = pickFields(req.body, ALLOWED_KEEPER_FIELDS);
+    const keeper = await Keeper.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
     if (!keeper) {
       res.status(404).json({ error: "Keeper not found" });
       return;
@@ -146,6 +192,10 @@ router.put("/keepers/:id", async (req: Request, res: Response) => {
 
 router.delete("/keepers/:id", async (req: Request, res: Response) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid keeper ID" });
+      return;
+    }
     const keeper = await Keeper.findByIdAndDelete(req.params.id);
     if (!keeper) {
       res.status(404).json({ error: "Keeper not found" });
@@ -163,10 +213,11 @@ router.delete("/keepers/:id", async (req: Request, res: Response) => {
 
 router.get("/bot-config", async (_req: Request, res: Response) => {
   try {
-    let config = await BotConfig.findOne();
-    if (!config) {
-      config = await BotConfig.create({});
-    }
+    let config = await BotConfig.findOneAndUpdate(
+      {},
+      { $setOnInsert: {} },
+      { upsert: true, new: true },
+    );
     res.json({ success: true, config });
   } catch (err) {
     withError(res, err, "fetch bot config");
@@ -175,7 +226,9 @@ router.get("/bot-config", async (_req: Request, res: Response) => {
 
 router.put("/bot-config", async (req: Request, res: Response) => {
   try {
-    const config = await BotConfig.findOneAndUpdate({}, req.body, { new: true, upsert: true, runValidators: true });
+    const allowedFields = ["hydraulicPressure", "laserIntensity", "opticArraySync", "coreTemperature", "overclockActive"];
+    const data = pickFields(req.body, allowedFields);
+    const config = await BotConfig.findOneAndUpdate({}, data, { new: true, upsert: true, runValidators: true });
     res.json({ success: true, config });
   } catch (err) {
     withError(res, err, "update bot config");
@@ -191,7 +244,7 @@ router.get("/users", async (req: Request, res: Response) => {
     const q = (req.query.q as string || "").trim();
     let query = {};
     if (q.length >= 2) {
-      const regex = new RegExp(q, "i");
+      const regex = new RegExp(escapeRegex(q), "i");
       query = { $or: [{ name: regex }, { email: regex }, { githubUsername: regex }] };
     }
     const users = await PortalUser.find(query).select("-passwordHash").sort({ createdAt: -1 }).lean();
@@ -208,13 +261,28 @@ router.post("/users", async (req: Request, res: Response) => {
       res.status(400).json({ error: "name, email, and password are required" });
       return;
     }
+    if (typeof name !== "string" || name.trim().length === 0) {
+      res.status(400).json({ error: "name must be a non-empty string" });
+      return;
+    }
+    if (typeof email !== "string" || !email.includes("@")) {
+      res.status(400).json({ error: "Invalid email format" });
+      return;
+    }
+    if (typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "Password must be at least 8 characters" });
+      return;
+    }
+    const validRoles = ["contributor", "admin"];
+    const userRole = validRoles.includes(role) ? role : "contributor";
+
     const existing = await PortalUser.findOne({ email: email.toLowerCase() });
     if (existing) {
       res.status(409).json({ error: "A user with this email already exists" });
       return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await PortalUser.create({ name, email: email.toLowerCase(), passwordHash, role: role || "contributor", githubUsername });
+    const user = await PortalUser.create({ name: name.trim(), email: email.toLowerCase(), passwordHash, role: userRole, githubUsername });
     res.status(201).json({ success: true, user: mapUser(user) });
   } catch (err) {
     withError(res, err, "create user");
@@ -223,13 +291,28 @@ router.post("/users", async (req: Request, res: Response) => {
 
 router.put("/users/:id", async (req: Request, res: Response) => {
   try {
-    const update: any = {};
-    if (req.body.name) update.name = req.body.name;
-    if (req.body.role) update.role = req.body.role;
-    if (req.body.githubUsername !== undefined) update.githubUsername = req.body.githubUsername;
-    if (req.body.password) update.passwordHash = await bcrypt.hash(req.body.password, 12);
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+    const data = pickFields(req.body, ALLOWED_USER_FIELDS);
+    if (data.role) {
+      const validRoles = ["contributor", "admin"];
+      if (!validRoles.includes(data.role)) {
+        res.status(400).json({ error: "Invalid role" });
+        return;
+      }
+    }
+    if (data.password) {
+      if (typeof data.password !== "string" || data.password.length < 8) {
+        res.status(400).json({ error: "Password must be at least 8 characters" });
+        return;
+      }
+      data.passwordHash = await bcrypt.hash(data.password, 12);
+      delete data.password;
+    }
 
-    const user = await PortalUser.findByIdAndUpdate(req.params.id, update, { new: true }).select("-passwordHash");
+    const user = await PortalUser.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true }).select("-passwordHash");
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -242,11 +325,23 @@ router.put("/users/:id", async (req: Request, res: Response) => {
 
 router.delete("/users/:id", async (req: Request, res: Response) => {
   try {
-    const user = await PortalUser.findByIdAndDelete(req.params.id);
+    if (!isValidObjectId(req.params.id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+    const user = await PortalUser.findById(req.params.id);
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
+    if (user.role === "admin") {
+      const adminCount = await PortalUser.countDocuments({ role: "admin" });
+      if (adminCount <= 1) {
+        res.status(400).json({ error: "Cannot delete the last admin user" });
+        return;
+      }
+    }
+    await PortalUser.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (err) {
     withError(res, err, "delete user");

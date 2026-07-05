@@ -41,12 +41,12 @@ async function findOrCreateUser(profile: any, provider: "google" | "github") {
   return created.toObject();
 }
 
-if (process.env.GOOGLE_CLIENT_ID) {
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
     new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.APP_URL || "http://localhost:3001"}/api/auth/google/callback`,
       },
       async (_accessToken, _refreshToken, profile, done) => {
@@ -62,12 +62,12 @@ if (process.env.GOOGLE_CLIENT_ID) {
   );
 }
 
-if (process.env.GITHUB_CLIENT_ID) {
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(
     new GitHubStrategy(
       {
         clientID: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
         callbackURL: `${process.env.APP_URL || "http://localhost:3001"}/api/auth/github/callback`,
         scope: ["user:email"],
       },
@@ -84,17 +84,7 @@ if (process.env.GITHUB_CLIENT_ID) {
   );
 }
 
-passport.serializeUser((user: any, done) => done(null, user._id));
-passport.deserializeUser(async (id: string, done) => {
-  try {
-    const user = await PortalUser.findById(id).lean();
-    done(null, user as any);
-  } catch (err) {
-    done(err);
-  }
-});
-
-if (process.env.GOOGLE_CLIENT_ID) {
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
 
   router.get(
@@ -113,7 +103,7 @@ if (process.env.GOOGLE_CLIENT_ID) {
         try {
           const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
           const token = signToken(payload);
-          res.redirect(`${FRONTEND_URL}?token=${token}`);
+          res.redirect(`${FRONTEND_URL}#token=${token}`);
         } catch (e) {
           console.error("Google callback error:", e);
           res.redirect(`${FRONTEND_URL}?auth=error`);
@@ -123,7 +113,7 @@ if (process.env.GOOGLE_CLIENT_ID) {
   );
 }
 
-if (process.env.GITHUB_CLIENT_ID) {
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   router.get("/github", passport.authenticate("github", { scope: ["user:email"], session: false }));
 
   router.get(
@@ -142,7 +132,7 @@ if (process.env.GITHUB_CLIENT_ID) {
         try {
           const payload: JwtPayload = { id: String(user._id), email: user.email, role: user.role };
           const token = signToken(payload);
-          res.redirect(`${FRONTEND_URL}?token=${token}`);
+          res.redirect(`${FRONTEND_URL}#token=${token}`);
         } catch (e) {
           console.error("GitHub callback error:", e);
           res.redirect(`${FRONTEND_URL}?auth=error`);
