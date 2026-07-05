@@ -236,6 +236,20 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
           </div>
         </div>
 
+        {/* ERROR STATE */}
+        {error && (
+          <div className="notched-card p-6 bg-rose-50/50 border border-rose-200/50 text-center mb-8">
+            <ShieldAlert className="w-8 h-8 text-rose-600 mx-auto mb-2" />
+            <p className="font-mono text-xs text-rose-800 font-semibold">{error}</p>
+            <button 
+              onClick={fetchLiveRankings}
+              className="mt-3 px-4 py-1.5 bg-rose-600 text-white font-mono text-[10px] uppercase cursor-pointer hover:bg-rose-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* LADDER LISTINGS */}
         <div className="space-y-4">
           <AnimatePresence>
