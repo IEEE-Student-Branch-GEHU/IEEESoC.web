@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import PortalUser from "../models/PortalUser";
+import BlockedToken from "../models/BlockedToken";
 import { authenticate, requireRole, signToken, JwtPayload } from "../middleware/auth";
 import { getBotCollection } from "../config/db";
 
@@ -87,6 +88,26 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/logout", authenticate, async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      res.status(400).json({ error: "No token provided" });
+      return;
+    }
+
+    const decoded = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await BlockedToken.create({ token, expiresAt });
+
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (err: any) {
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Failed to logout" });
+  }
+});
+
 router.get("/me", authenticate, async (req: Request, res: Response) => {
   try {
     const user = await PortalUser.findById(req.user!.id).select("-passwordHash");
@@ -167,20 +188,28 @@ router.patch("/me", authenticate, async (req: Request, res: Response) => {
 
 router.post("/setup", async (req: Request, res: Response) => {
   try {
-    const existingAdmin = await PortalUser.findOne({ role: "admin" });
-    if (existingAdmin) {
-      res.status(400).json({ error: "An admin already exists. Use signup with admin credentials instead." });
-      return;
-    }
-
     const { name, email, password, githubUsername } = req.body;
     if (!name || !email || !password) {
       res.status(400).json({ error: "name, email, and password are required" });
       return;
     }
+    if (typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "Password must be at least 8 characters" });
+      return;
+    }
+
+    const adminExists = await PortalUser.countDocuments({ role: "admin" });
+    if (adminExists > 0) {
+      res.status(400).json({ error: "An admin already exists. Use signup with admin credentials instead." });
+      return;
+    }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await PortalUser.create({ name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername });
+    const user = await PortalUser.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { $setOnInsert: { name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername } },
+      { upsert: true, new: true },
+    );
 
     res.status(201).json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err: any) {

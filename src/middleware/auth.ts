@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-dev-secret";
 
@@ -29,8 +30,24 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = decoded;
-    next();
+
+    const db = mongoose.connection.db;
+    if (db) {
+      db.collection("blockedtokens").findOne({ token }).then((blocked) => {
+        if (blocked) {
+          res.status(401).json({ error: "Token has been revoked" });
+          return;
+        }
+        req.user = decoded;
+        next();
+      }).catch(() => {
+        req.user = decoded;
+        next();
+      });
+    } else {
+      req.user = decoded;
+      next();
+    }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
   }
