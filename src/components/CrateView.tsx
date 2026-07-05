@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
 import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
+import { ArtifactCardSkeleton } from "./Skeleton";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
   User, CheckCircle, Crosshair, Award, Sparkles, X, Heart
@@ -210,9 +211,10 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
 
         {/* ARTIFACTS GRID */}
         {isLoading ? (
-          <div className="notched-card p-16 text-center text-on-surface/60 bg-surface/40 border border-on-surface/20">
-            <div className="w-8 h-8 border-2 border-on-surface/20 border-t-on-surface rounded-full animate-spin mx-auto mb-4" />
-            <p className="font-mono text-xs text-on-surface-variant">Loading artifacts from vault...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <ArtifactCardSkeleton key={i} />
+            ))}
           </div>
         ) : filteredArtifacts.length === 0 ? (
           <div className="notched-card p-16 text-center text-on-surface/60 bg-surface/40 border border-dashed border-on-surface/20">
