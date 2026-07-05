@@ -64,15 +64,15 @@ function buildCardTexture(
   gehuImg: HTMLImageElement | null,
   baseImg: HTMLImageElement | HTMLCanvasElement | ImageBitmap | null,
 ): THREE.CanvasTexture {
-  const W = 2048;
-  const H = 2048;
+  const W = 4096;
+  const H = 4096;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
 
-  // Scale context by 2 to support high-DPI rendering on the 1024x1024 coordinate system
-  ctx.scale(2, 2);
+  // Scale context by 4 for ultra-high-DPI rendering on the 1024x1024 coordinate system
+  ctx.scale(4, 4);
 
   // Logical coordinate system bounds: W_logical = 1024, H_logical = 1024
   const W_logical = 1024;
@@ -448,13 +448,11 @@ function Band({
             }}
           >
             <mesh geometry={nodes.card.geometry}>
-              <meshPhysicalMaterial
+              <meshStandardMaterial
                 map={cardTexture}
                 map-anisotropy={16}
-                clearcoat={1}
-                clearcoatRoughness={0.15}
-                roughness={0.3}
-                metalness={0.5}
+                roughness={1}
+                metalness={0}
               />
             </mesh>
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
