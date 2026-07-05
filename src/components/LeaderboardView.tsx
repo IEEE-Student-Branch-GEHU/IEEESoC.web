@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeeperLeaderboardRow } from "../types";
 import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
+import { LeaderboardRowSkeleton } from "./Skeleton";
 import { 
   Award, Search, ArrowUpDown, ChevronUp, UserPlus, Heart, 
   ShieldAlert, RefreshCw, Sparkles, X, PlusCircle 
@@ -252,6 +253,13 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
 
         {/* LADDER LISTINGS */}
         <div className="space-y-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <LeaderboardRowSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
           <AnimatePresence>
             {sortedKeepers.map((keeper, index) => {
               const isPledging = lastPledgeTarget === keeper.name;
@@ -364,6 +372,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
               );
             })}
           </AnimatePresence>
+          )}
         </div>
 
         {/* MODAL: NOMINATE DIALOG */}
