@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ieeesoc-web
+    env: node
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
