@@ -28,7 +28,7 @@ export default function LanyardCard({ userName, userEmail, userRole, githubUsern
       <div className="absolute top-4 left-4 z-10 font-mono text-[9px] uppercase tracking-widest text-white/50 bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-xs">
         Archivist ID Badge // Interactive 3D
       </div>
-      <Canvas camera={{ position: [0, 0, 13], fov: 25 }}>
+      <Canvas camera={{ position: [0, 0, 11], fov: 21 }}>
         <ambientLight intensity={Math.PI} />
         <Physics interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
           <Band
@@ -161,29 +161,29 @@ function buildCardTexture(
   // --- Title ---
   const titleY = 290;
   ctx.fillStyle = '#1a1a1a';
-  ctx.font = 'bold 22px "EB Garamond", Georgia, serif';
+  ctx.font = 'bold 24px "EB Garamond", Georgia, serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText('IEEESoC \'26', cardW / 2, titleY);
 
-  ctx.font = '13px "EB Garamond", Georgia, serif';
-  ctx.fillStyle = '#5c5240';
-  ctx.fillText('ARCHIVIST IDENTIFICATION', cardW / 2, titleY + 28);
+  ctx.font = 'bold 13px "JetBrains Mono", Courier, monospace';
+  ctx.fillStyle = '#4e4432';
+  ctx.fillText('ARCHIVIST IDENTIFICATION', cardW / 2, titleY + 30);
 
   // --- Divider line ---
-  const divY = titleY + 52;
+  const divY = titleY + 54;
   ctx.strokeStyle = '#c4b899';
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(50, divY);
   ctx.lineTo(cardW - 50, divY);
   ctx.stroke();
 
   // --- User details ---
-  const detailStartY = divY + 18;
+  const detailStartY = divY + 22;
   const labelX = 50;
   const valueX = 170;
-  const lineH = 34;
+  const lineH = 38;
 
   const fields = [
     { label: 'NAME', value: userName || 'Unknown' },
@@ -197,37 +197,37 @@ function buildCardTexture(
     const y = detailStartY + i * lineH;
 
     // Label
-    ctx.fillStyle = '#8b7d5e';
-    ctx.font = 'bold 9px "JetBrains Mono", Courier, monospace';
+    ctx.fillStyle = '#4e4432';
+    ctx.font = 'bold 12px "JetBrains Mono", Courier, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(field.label, labelX, y);
+    ctx.fillText(field.label, labelX, y + 2);
 
     // Value
-    ctx.fillStyle = '#1a1a1a';
-    ctx.font = '13px "EB Garamond", Georgia, serif';
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 16px "EB Garamond", Georgia, serif';
     ctx.textAlign = 'left';
-    ctx.fillText(field.value, valueX, y - 1);
+    ctx.fillText(field.value, valueX, y);
 
     // Underline
     ctx.strokeStyle = '#d5cdb8';
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 0.75;
     ctx.beginPath();
-    ctx.moveTo(valueX, y + 16);
-    ctx.lineTo(cardW - 50, y + 16);
+    ctx.moveTo(valueX, y + 20);
+    ctx.lineTo(cardW - 50, y + 20);
     ctx.stroke();
   });
 
   // --- Role badge ---
-  const badgeY = detailStartY + 2 * lineH - 3;
+  const badgeY = detailStartY + 2 * lineH;
   const badgeText = userRole === 'admin' ? 'ADMIN' : 'CONTRIBUTOR';
   const badgeColor = userRole === 'admin' ? '#c0392b' : '#2b5797';
   const badgeW = ctx.measureText(badgeText).width + 16;
   ctx.fillStyle = badgeColor;
-  roundRect(ctx, valueX - 2, badgeY - 2, badgeW + 4, 17, 3);
+  roundRect(ctx, valueX - 2, badgeY - 2, badgeW + 4, 19, 3);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 9px "JetBrains Mono", Courier, monospace';
+  ctx.font = 'bold 11px "JetBrains Mono", Courier, monospace';
   ctx.fillText(badgeText, valueX + 6, badgeY + 3);
 
   // --- Barcode-style decoration at bottom ---
@@ -253,6 +253,8 @@ function buildCardTexture(
   ctx.fillRect(borderInset, cardH - 18, cardW - borderInset * 2, 3);
 
   const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
   tex.flipY = false;
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.needsUpdate = true;
