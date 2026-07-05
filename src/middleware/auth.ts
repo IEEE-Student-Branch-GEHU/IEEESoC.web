@@ -1,7 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-dev-secret";
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+if (!JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET must be set");
+  process.exit(1);
+}
 
 export interface JwtPayload {
   id: string;
