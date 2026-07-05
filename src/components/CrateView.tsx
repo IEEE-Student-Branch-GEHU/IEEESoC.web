@@ -31,6 +31,7 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
     return [];
   });
 
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedArtifact, setSelectedArtifact] = useState<ChronicleArtifact | null>(null);
@@ -49,6 +50,7 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
   // Fetch from server API on mount, fallback to localStorage
   useEffect(() => {
     const fetchArtifacts = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch("/api/admin/public/artifacts");
         const data = await res.json();
@@ -71,6 +73,8 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         }
       } catch {
         // Server unavailable, use localStorage
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchArtifacts();
@@ -205,7 +209,12 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         </div>
 
         {/* ARTIFACTS GRID */}
-        {filteredArtifacts.length === 0 ? (
+        {isLoading ? (
+          <div className="notched-card p-16 text-center text-on-surface/60 bg-surface/40 border border-on-surface/20">
+            <div className="w-8 h-8 border-2 border-on-surface/20 border-t-on-surface rounded-full animate-spin mx-auto mb-4" />
+            <p className="font-mono text-xs text-on-surface-variant">Loading artifacts from vault...</p>
+          </div>
+        ) : filteredArtifacts.length === 0 ? (
           <div className="notched-card p-16 text-center text-on-surface/60 bg-surface/40 border border-dashed border-on-surface/20">
             <Cpu className="w-12 h-12 mx-auto mb-4 opacity-30 animate-pulse" />
             <h3 className="font-serif text-2xl text-on-surface">No Chronological Artifact Found</h3>

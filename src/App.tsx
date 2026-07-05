@@ -127,6 +127,7 @@ export default function App() {
   }, [activeTab]);
 
   // Helper to add log statement dynamically across all subcomponents
+  const MAX_LOGS = 500;
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
     const timestamp = `[${new Date().toTimeString().split(" ")[0]}]`;
     const newLog: TelemetryLog = {
@@ -135,7 +136,7 @@ export default function App() {
       message,
       type
     };
-    setLogs((prev) => [...prev, newLog]);
+    setLogs((prev) => [...prev.slice(-(MAX_LOGS - 1)), newLog]);
   };
 
   const handleClearLogs = () => {

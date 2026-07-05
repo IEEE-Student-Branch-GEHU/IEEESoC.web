@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BotSimulatorState, TelemetryLog } from "../types";
 import { ARTIFACT_IMAGES } from "../data";
@@ -62,6 +62,15 @@ export default function BotSimulatorView({ logs, onAddLogMessage, onClearLogs }:
   }, []);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const coolingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const calibrateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (coolingTimeoutRef.current) clearTimeout(coolingTimeoutRef.current);
+      if (calibrateTimeoutRef.current) clearTimeout(calibrateTimeoutRef.current);
+    };
+  }, []);
 
   // Auto-scroll logs to bottom whenever they change
   useEffect(() => {
@@ -131,7 +140,7 @@ export default function BotSimulatorView({ logs, onAddLogMessage, onClearLogs }:
   const handleCoolingFlow = () => {
     onAddLogMessage("Active refrigeration matrix activated. Discharging ambient core heat...", "info");
     setIsCalibrating(true);
-    setTimeout(() => {
+    coolingTimeoutRef.current = setTimeout(() => {
       setCoreTemperature(32);
       setOverclockActive(false);
       setIsCalibrating(false);
@@ -156,7 +165,7 @@ export default function BotSimulatorView({ logs, onAddLogMessage, onClearLogs }:
   const handleCalibrateSensors = () => {
     setIsCalibrating(true);
     onAddLogMessage("Realigning laser intensity matrices and optic focal arrays...", "info");
-    setTimeout(() => {
+    calibrateTimeoutRef.current = setTimeout(() => {
       setOpticArraySync(99);
       setIsCalibrating(false);
       onAddLogMessage("Optic Alignment recalibrated to 99.8% precision factor.", "success");
