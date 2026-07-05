@@ -370,7 +370,13 @@ export default function ProfileView({ onAddLogMessage }: Props) {
 
       {/* LANYARD CARD SHOWCASE (Right, 1/3 width on desktop) */}
       <div className="space-y-3">
-        <LanyardCard />
+        <LanyardCard
+          userName={user.name}
+          userEmail={user.email}
+          userRole={user.role}
+          githubUsername={user.githubUsername}
+          score={stats?.score}
+        />
       </div>
     </div>
   </div>
