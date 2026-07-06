@@ -37,6 +37,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
   const [showNominateModal, setShowNominateModal] = useState(false);
   const [newKeeperName, setNewKeeperName] = useState("");
   const [newKeeperRole, setNewKeeperRole] = useState("");
+  const [viewMode, setViewMode] = useState<"global" | "project-admin">("global");
   const [initialCount, setInitialCount] = useState(10000);
   const [lastPledgeTarget, setLastPledgeTarget] = useState<string | null>(null);
 
@@ -44,36 +45,48 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://purvansh01-ieee-soc-bot.hf.space/api/leaderboard?limit=25");
-      const result = await response.json();
-      if (result.success && result.data) {
-        const mappedData: KeeperLeaderboardRow[] = result.data.map((f: any) => ({
-          rank: f.rank,
-          name: f.name || `@${f.username}`,
-          role: `${f.track} Contributor`,
-          chroniclesCount: f.mergedPRCount,
-          reputationPoints: f.score,
-          imageUrl: f.avatarUrl || ARTIFACT_IMAGES.socrates,
-          status: f.score > 0 ? "active" : "synchronizing"
-        }));
-        setKeepers(mappedData);
+      if (viewMode === "global") {
+        const response = await fetch("https://purvansh01-ieee-soc-bot.hf.space/api/leaderboard?limit=25");
+        const result = await response.json();
+        if (result.success && result.data) {
+          const mappedData: KeeperLeaderboardRow[] = result.data.map((f: any) => ({
+            rank: f.rank,
+            name: f.name || `@${f.username}`,
+            role: `${f.track} Contributor`,
+            chroniclesCount: f.mergedPRCount,
+            reputationPoints: f.score,
+            imageUrl: f.avatarUrl || ARTIFACT_IMAGES.socrates,
+            status: f.score > 0 ? "active" : "synchronizing"
+          }));
+          setKeepers(mappedData);
+        } else {
+          throw new Error("Leaderboard API returned unsuccessful response.");
+        }
       } else {
-        throw new Error("Leaderboard API returned unsuccessful response.");
+        const response = await fetch("/api/admin/public/keepers");
+        const data = await response.json();
+        if (data.success && data.keepers) {
+          setKeepers(data.keepers);
+        } else {
+          throw new Error("Keeper list API returned unsuccessful response.");
+        }
       }
     } catch (err: any) {
-      console.error("Failed to load live rankings:", err);
-      setError(err.message || "Failed to load live rankings.");
+      console.error(`Failed to load ${viewMode} rankings:`, err);
+      setError(err.message || `Failed to load ${viewMode} rankings.`);
 
-      // Fallback to admin API, then localStorage, then defaults
-      try {
-        const adminRes = await fetch("/api/admin/public/keepers");
-        const adminData = await adminRes.json();
-        if (adminData.success && adminData.keepers?.length) {
-          setKeepers(adminData.keepers);
-          return;
+      // Fallback
+      if (viewMode === "global") {
+        try {
+          const adminRes = await fetch("/api/admin/public/keepers");
+          const adminData = await adminRes.json();
+          if (adminData.success && adminData.keepers?.length) {
+            setKeepers(adminData.keepers);
+            return;
+          }
+        } catch {
+          // Admin API unavailable
         }
-      } catch {
-        // Admin API unavailable
       }
 
       const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
@@ -94,7 +107,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
 
   useEffect(() => {
     fetchLiveRankings();
-  }, []);
+  }, [viewMode]);
 
   // Persistence
   useEffect(() => {
@@ -182,13 +195,41 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
             Registry of Honor
           </span>
           <h1 className="font-serif text-4xl md:text-6xl text-on-surface tracking-tight">
-            Chronicle Keepers
+            {viewMode === "global" ? "Chronicle Keepers" : "Project Admins"}
           </h1>
           <div className="w-16 h-[2px] bg-on-surface mx-auto"></div>
           <p className="font-sans text-xs md:text-sm text-on-surface-variant max-w-lg mx-auto">
-            High-ranking classical custodians who continuously catalog, sync, and calibrate cognitive digital fragments into the Lyceum data engine.
+            {viewMode === "global"
+              ? "High-ranking classical custodians who continuously catalog, sync, and calibrate cognitive digital fragments into the Lyceum data engine."
+              : "Distinguished directors leading core repository developments, synchronizing branch histories, and mentoring apprentice archivists."}
           </p>
         </header>
+
+        {/* LEADERBOARD VIEW TOGGLE SWITCH */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-surface-container-high/60 border border-on-surface/5 rounded-full p-1 flex items-center shadow-inner">
+            <button
+              onClick={() => setViewMode("global")}
+              className={`px-6 py-2 rounded-full font-mono text-[10px] uppercase font-bold tracking-wider transition-all cursor-pointer ${
+                viewMode === "global"
+                  ? "bg-on-surface text-surface shadow-md"
+                  : "text-on-surface/60 hover:text-on-surface"
+              }`}
+            >
+              Global Leaderboard
+            </button>
+            <button
+              onClick={() => setViewMode("project-admin")}
+              className={`px-6 py-2 rounded-full font-mono text-[10px] uppercase font-bold tracking-wider transition-all cursor-pointer ${
+                viewMode === "project-admin"
+                  ? "bg-on-surface text-surface shadow-md"
+                  : "text-on-surface/60 hover:text-on-surface"
+              }`}
+            >
+              Project Admin Leaderboard
+            </button>
+          </div>
+        </div>
 
         {/* ACTIVE LEADERBOARD TOOLS */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-surface-container-high/40 p-4 border border-on-surface/5 notched-card mb-8">
@@ -197,7 +238,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface/40" />
             <input 
               type="text"
-              placeholder="Search archivist name..."
+              placeholder={viewMode === "global" ? "Search contributor name..." : "Search project admin name..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-surface border border-on-surface/10 rounded focus:border-on-surface focus:outline-none font-sans text-xs text-on-surface"
