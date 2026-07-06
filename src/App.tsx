@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Compass, List, Play, Cpu, Heart,
@@ -18,7 +18,8 @@ import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
 import ProfileDropdown from "./components/ProfileDropdown";
-import GreekMythologyBackground from "./components/GreekMythologyBackground";
+
+const GreekMythologyBackground = lazy(() => import("./components/GreekMythologyBackground"));
 
 // Auth
 import { useAuth } from "./hooks/useAuth";
@@ -222,9 +223,11 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-transparent text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
+    <div className="relative min-h-screen bg-primary-container text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
       {/* 3D GREEK MYTHOLOGY BACKGROUND */}
-      <GreekMythologyBackground />
+      <Suspense fallback={null}>
+        <GreekMythologyBackground isActive={activeTab === "gallery"} />
+      </Suspense>
 
       {/* DYNAMIC SCROLL READABILITY OVERLAY */}
       <div

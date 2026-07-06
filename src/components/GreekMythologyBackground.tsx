@@ -1,7 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import * as THREE from "three";
 
-export default function GreekMythologyBackground() {
+interface GreekMythologyBackgroundProps {
+  isActive: boolean;
+}
+
+export default memo(function GreekMythologyBackground({ isActive }: GreekMythologyBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(0);
   const targetScrollYRef = useRef(0);
@@ -9,6 +13,21 @@ export default function GreekMythologyBackground() {
   const mouseYRef = useRef(0);
   const targetMouseXRef = useRef(0);
   const targetMouseYRef = useRef(0);
+
+  // Keep track of active state using refs so the WebGL closure can access current values
+  const isActiveRef = useRef(isActive);
+  const startLoopRef = useRef<(() => void) | null>(null);
+  const stopLoopRef = useRef<(() => void) | null>(null);
+  const isLoopRunning = useRef(false);
+
+  useEffect(() => {
+    isActiveRef.current = isActive;
+    if (isActive) {
+      if (startLoopRef.current) startLoopRef.current();
+    } else {
+      if (stopLoopRef.current) stopLoopRef.current();
+    }
+  }, [isActive]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -64,7 +83,7 @@ export default function GreekMythologyBackground() {
     scene.add(divineLight);
 
     // --- MATERIALS ---
-    // Beautiful marble texture shader or standard material
+    // Beautiful marble texture standard material
     const marbleMaterial = new THREE.MeshStandardMaterial({
       color: 0xfbf9f3, // Elegant light beige marble
       roughness: 0.35,
@@ -678,21 +697,92 @@ export default function GreekMythologyBackground() {
       window.addEventListener("mousemove", handleMouseMove);
     }
 
-    // --- ANIMATION LOOP ---
-    let animationFrameId: number;
-    let clock = new THREE.Clock();
+    // --- SUSPENSION & ACCESSIBILITY CONTROLLER ---
     const targetLookAt = new THREE.Vector3();
+    const clock = new THREE.Clock();
+
+    // Respect user preferred motion settings
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let prefersReducedMotion = mediaQuery.matches;
+
+    // --- ANIMATION LOOP ---
+    let animationFrameId = 0;
+
+    const startLoop = () => {
+      if (isLoopRunning.current) return;
+      if (document.visibilityState !== "visible" || !isActiveRef.current) return;
+
+      isLoopRunning.current = true;
+      clock.getDelta(); // reset clock delta to prevent jump offsets
+      
+      if (prefersReducedMotion) {
+        renderer.render(scene, camera);
+        isLoopRunning.current = false;
+        return;
+      }
+
+      animate();
+    };
+
+    const stopLoop = () => {
+      isLoopRunning.current = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      }
+    };
+
+    startLoopRef.current = startLoop;
+    stopLoopRef.current = stopLoop;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (isActiveRef.current) {
+          startLoop();
+        }
+      } else {
+        stopLoop();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const handleMotionQueryChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+      if (prefersReducedMotion) {
+        stopLoop();
+        renderer.render(scene, camera);
+      } else {
+        startLoop();
+      }
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleMotionQueryChange);
+    }
 
     const animate = () => {
+      if (document.visibilityState !== "visible" || !isActiveRef.current) {
+        isLoopRunning.current = false;
+        return;
+      }
+
+      if (prefersReducedMotion) {
+        renderer.render(scene, camera);
+        isLoopRunning.current = false;
+        return;
+      }
+
       animationFrameId = requestAnimationFrame(animate);
 
-      const time = clock.getElapsedTime();
+      // Get frame delta time safely
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const time = clock.elapsedTime;
 
-      // Lerp Scroll Parallax
-      scrollYRef.current += (targetScrollYRef.current - scrollYRef.current) * 0.06;
-      // Lerp Mouse Parallax
-      mouseXRef.current += (targetMouseXRef.current - mouseXRef.current) * 0.05;
-      mouseYRef.current += (targetMouseYRef.current - mouseYRef.current) * 0.05;
+      // Lerp Scroll Parallax using delta-time based exponential decay
+      scrollYRef.current += (targetScrollYRef.current - scrollYRef.current) * (1 - Math.exp(-4.5 * delta));
+      // Lerp Mouse Parallax using delta-time based exponential decay
+      mouseXRef.current += (targetMouseXRef.current - mouseXRef.current) * (1 - Math.exp(-3.5 * delta));
+      mouseYRef.current += (targetMouseYRef.current - mouseYRef.current) * (1 - Math.exp(-3.5 * delta));
 
       // Camera positioning
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -726,8 +816,8 @@ export default function GreekMythologyBackground() {
       // Animate drifting cloud planes
       clouds.forEach((cloud) => {
         const data = cloud.userData;
-        cloud.position.x += data.driftSpeed;
-        cloud.rotation.z += data.rotSpeed;
+        cloud.position.x += data.driftSpeed * 60 * delta;
+        cloud.rotation.z += data.rotSpeed * 60 * delta;
         
         // Slow float bobbing
         cloud.position.y = data.yBase + Math.sin(time * data.ySpeed) * data.yAmplitude;
@@ -742,10 +832,10 @@ export default function GreekMythologyBackground() {
       const pos = particleGeometry.attributes.position.array as Float32Array;
       for (let i = 0; i < particleCount; i++) {
         // Vertical rising drift
-        pos[i * 3 + 1] += particleSpeeds[i] * 1.5; // y speed
+        pos[i * 3 + 1] += particleSpeeds[i] * 90 * delta; // y speed
         
         // Slight horizontal sway
-        pos[i * 3] += Math.sin(time * 0.6 + i) * 0.003;
+        pos[i * 3] += Math.sin(time * 0.6 + i) * 0.18 * delta;
 
         // Wrap around bottom if too high
         if (pos[i * 3 + 1] > 18) {
@@ -764,7 +854,8 @@ export default function GreekMythologyBackground() {
       renderer.render(scene, camera);
     };
 
-    animate();
+    // Kickstart the loop
+    startLoop();
 
     // --- RESIZE HANDLER ---
     const handleResize = () => {
@@ -776,6 +867,11 @@ export default function GreekMythologyBackground() {
 
       renderer.setSize(w, h);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 1.5));
+
+      // Force a single render check if the loop is currently paused
+      if (!isLoopRunning.current) {
+        renderer.render(scene, camera);
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -785,7 +881,13 @@ export default function GreekMythologyBackground() {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleMotionQueryChange);
+      }
+      stopLoop();
+      startLoopRef.current = null;
+      stopLoopRef.current = null;
       
       // Traverse scene hierarchy to release WebGL assets on cleanup
       scene.traverse((object) => {
@@ -839,7 +941,10 @@ export default function GreekMythologyBackground() {
         zIndex: 0,
         overflow: "hidden",
         backgroundColor: "transparent",
+        opacity: isActive ? 0.45 : 0, // 45% visual intensity on Gallery page, hidden elsewhere
+        transition: "opacity 0.4s ease-in-out",
       }}
     />
   );
-}
+});
+
