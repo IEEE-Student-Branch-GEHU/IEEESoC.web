@@ -1,13 +1,25 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Compass, List, Play, Cpu, Heart,
-  Terminal, ShieldCheck, HelpCircle, FileText, X, Activity, Archive, Sliders
+  Compass,
+  List,
+  Play,
+  Cpu,
+  Heart,
+  Terminal,
+  ShieldCheck,
+  HelpCircle,
+  FileText,
+  X,
+  Activity,
+  Archive,
+  Sliders,
+  User,
 } from "lucide-react";
 
 // Types & Data
 import { TelemetryLog, ChronicleArtifact } from "./types";
-import { CORE_TELEMETRIAL_LOGS_PRESET, DEFAULT_ARTIFACTS } from "./data";
+import { CACHE_VERSION } from "./data";
 
 // Sub-components
 import GalleryView from "./components/GalleryView";
@@ -17,7 +29,7 @@ import BotSimulatorView from "./components/BotSimulatorView";
 import AccessTerminalModal from "./components/AccessTerminalModal";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginView from "./components/LoginView";
-import ProfileDropdown from "./components/ProfileDropdown";
+import ProfileView from "./components/ProfileView";
 
 const GreekMythologyBackground = lazy(() => import("./components/GreekMythologyBackground"));
 
@@ -25,12 +37,12 @@ const GreekMythologyBackground = lazy(() => import("./components/GreekMythologyB
 import { useAuth } from "./hooks/useAuth";
 
 export default function App() {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin">("gallery");
+  const { user, isAuthenticated, isAdmin, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState<"gallery" | "crate" | "leaderboard" | "bot" | "admin" | "profile">("gallery");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
-  const [logs, setLogs] = useState<TelemetryLog[]>(CORE_TELEMETRIAL_LOGS_PRESET);
+  const [logs, setLogs] = useState<TelemetryLog[]>([]);
   const [activeFooterModal, setActiveFooterModal] = useState<"privacy" | "status" | "manual" | null>(null);
   const [isPopMode, setIsPopMode] = useState<boolean>(() => {
     return localStorage.getItem("ieeesoc_pop_mode") === "true";
@@ -136,35 +148,24 @@ export default function App() {
   const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>([]);
 
   useEffect(() => {
-    // Read from localStorage or assign default on mount
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_artifacts");
+      localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
+      return;
+    }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
         setArtifacts(JSON.parse(saved));
       } catch (e) {
-        setArtifacts(DEFAULT_ARTIFACTS);
+        setArtifacts([]);
       }
-    } else {
-      setArtifacts(DEFAULT_ARTIFACTS);
     }
-  }, [activeTab]); // Fetch fresh values on tab switches
-
-  // Hash-based routing for direct URL access (e.g., /#/admin)
-  // Wait for auth to finish loading so we don't show login modal for already-authenticated users
-  useEffect(() => {
-    if (loading) return;
-    const hash = window.location.hash.replace("#", "");
-    if (hash.startsWith("/admin")) {
-      handleTabChange("admin");
-    }
-  }, [loading]);
-
-  useEffect(() => {
-    const hash = activeTab === "admin" ? "#/admin" : "#/";
-    window.location.hash = hash;
   }, [activeTab]);
 
   // Helper to add log statement dynamically across all subcomponents
+  const MAX_LOGS = 500;
   const handleAddNewLog = (message: string, type: "info" | "warning" | "success" | "critical") => {
     const timestamp = `[${new Date().toTimeString().split(" ")[0]}]`;
     const newLog: TelemetryLog = {
@@ -173,7 +174,7 @@ export default function App() {
       message,
       type
     };
-    setLogs((prev) => [...prev, newLog]);
+    setLogs((prev) => [...prev.slice(-(MAX_LOGS - 1)), newLog]);
   };
 
   const handleClearLogs = () => {
@@ -206,21 +207,78 @@ export default function App() {
       setActiveTab("admin");
       return;
     }
+    if (tab === "profile") {
+      if (!isAuthenticated) {
+        setPendingTab("profile");
+        setShowLoginModal(true);
+        return;
+      }
+      setActiveTab("profile");
+      return;
+    }
     if (!isAuthenticated) {
       setPendingTab(tab);
       setShowLoginModal(true);
       return;
     }
     setActiveTab(tab as any);
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated, isAdmin, handleAddNewLog]);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = useCallback(() => {
     setShowLoginModal(false);
-    if (pendingTab) {
-      handleTabChange(pendingTab);
-      setPendingTab(null);
+    setPendingTab((prev) => {
+      if (prev) {
+        // Directly set the tab — auth state is now valid after login
+        setActiveTab(prev as any);
+      }
+      return null;
+    });
+  }, []);
+
+  // Synchronize the URL hash with activeTab state using hashchange listener
+  useEffect(() => {
+    if (loading) return;
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash.startsWith("/admin")) {
+        handleTabChange("admin");
+      } else if (hash.startsWith("/profile")) {
+        handleTabChange("profile");
+      } else if (hash.startsWith("/crate")) {
+        handleTabChange("crate");
+      } else if (hash.startsWith("/leaderboard")) {
+        handleTabChange("leaderboard");
+      } else if (hash.startsWith("/bot")) {
+        handleTabChange("bot");
+      } else {
+        handleTabChange("gallery");
+      }
+    };
+
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, [loading, handleTabChange]);
+
+  // Synchronize activeTab back to the URL hash
+  useEffect(() => {
+    if (loading) return;
+    const currentHash = window.location.hash;
+    let targetHash = "#/";
+    if (activeTab === "admin") targetHash = "#/admin";
+    else if (activeTab === "profile") targetHash = "#/profile";
+    else if (activeTab === "crate") targetHash = "#/crate";
+    else if (activeTab === "leaderboard") targetHash = "#/leaderboard";
+    else if (activeTab === "bot") targetHash = "#/bot";
+
+    if (currentHash !== targetHash) {
+      window.location.hash = targetHash;
     }
-  };
+  }, [activeTab, loading]);
 
   return (
     <div className="relative min-h-screen bg-primary-container text-on-surface flex flex-col justify-between selection:bg-on-surface selection:text-surface">
@@ -318,8 +376,28 @@ export default function App() {
             <span>{isPopMode ? "✨ POP ACTIVE" : "🎨 POP MODE"}</span>
           </button>
 
+
+
           {/* Profile */}
-          <ProfileDropdown onAddLogMessage={handleAddNewLog} />
+          {isAuthenticated && user && (
+            <button
+              onClick={() => handleTabChange("profile")}
+              className={`flex items-center gap-2 px-3 py-2 rounded-full border border-on-surface/10 hover:border-on-surface/30 transition-all cursor-pointer bg-surface/50 ${activeTab === "profile" ? "bg-on-surface text-surface border-on-surface font-semibold" : ""
+                }`}
+            >
+              <div className="w-7 h-7 rounded-full bg-surface-container-high border border-on-surface/20 flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-on-surface/60" />
+                )}
+              </div>
+              <span className={`font-mono text-[10px] uppercase tracking-wider hidden sm:block ${activeTab === "profile" ? "text-surface" : "text-on-surface"
+                }`}>
+                {user.name.split(" ")[0]}
+              </span>
+            </button>
+          )}
 
           {/* Access terminal action button */}
           <button
@@ -398,6 +476,18 @@ export default function App() {
               transition={{ duration: 0.4 }}
             >
               <AdminDashboard onAddLogMessage={handleAddNewLog} />
+            </motion.div>
+          )}
+
+          {activeTab === "profile" && (
+            <motion.div
+              key="profile-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ProfileView onAddLogMessage={handleAddNewLog} />
             </motion.div>
           )}
         </AnimatePresence>

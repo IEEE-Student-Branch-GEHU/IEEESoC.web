@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
-import { DEFAULT_ARTIFACTS, ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
+import { ArtifactCardSkeleton } from "./Skeleton";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
   User, CheckCircle, Crosshair, Award, Sparkles, X, Heart
@@ -14,6 +15,12 @@ interface CrateViewProps {
 export default function CrateView({ onAddLogMessage }: CrateViewProps) {
   // Load initial artifacts from localStorage or defaults
   const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>(() => {
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_artifacts");
+      localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
+      return [];
+    }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
@@ -22,9 +29,10 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         // Fallback
       }
     }
-    return DEFAULT_ARTIFACTS;
+    return [];
   });
 
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedArtifact, setSelectedArtifact] = useState<ChronicleArtifact | null>(null);
@@ -43,6 +51,7 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
   // Fetch from server API on mount, fallback to localStorage
   useEffect(() => {
     const fetchArtifacts = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch("/api/admin/public/artifacts");
         const data = await res.json();
@@ -65,6 +74,8 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         }
       } catch {
         // Server unavailable, use localStorage
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchArtifacts();
@@ -199,7 +210,13 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
         </div>
 
         {/* ARTIFACTS GRID */}
-        {filteredArtifacts.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <ArtifactCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredArtifacts.length === 0 ? (
           <div className="notched-card p-16 text-center text-on-surface/60 bg-surface/40 border border-dashed border-on-surface/20">
             <Cpu className="w-12 h-12 mx-auto mb-4 opacity-30 animate-pulse" />
             <h3 className="font-serif text-2xl text-on-surface">No Chronological Artifact Found</h3>

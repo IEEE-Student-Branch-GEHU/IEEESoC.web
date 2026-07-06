@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeeperLeaderboardRow } from "../types";
-import { DEFAULT_KEEPERS, ARTIFACT_IMAGES } from "../data";
+import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
+import { LeaderboardRowSkeleton } from "./Skeleton";
 import { 
   Award, Search, ArrowUpDown, ChevronUp, UserPlus, Heart, 
   ShieldAlert, RefreshCw, Sparkles, X, PlusCircle 
@@ -12,7 +13,22 @@ interface LeaderboardViewProps {
 }
 
 export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProps) {
-  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(DEFAULT_KEEPERS);
+  const [keepers, setKeepers] = useState<KeeperLeaderboardRow[]>(() => {
+    const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+    if (cachedVersion !== String(CACHE_VERSION)) {
+      localStorage.removeItem("hall_chronicles_keepers");
+      return [];
+    }
+    const saved = localStorage.getItem("hall_chronicles_keepers");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return [];
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,15 +76,16 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
         // Admin API unavailable
       }
 
-      const saved = localStorage.getItem("hall_chronicles_keepers");
-      if (saved) {
-        try {
-          setKeepers(JSON.parse(saved));
-        } catch (e) {
-          setKeepers(DEFAULT_KEEPERS);
+      const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
+      if (cachedVersion === String(CACHE_VERSION)) {
+        const saved = localStorage.getItem("hall_chronicles_keepers");
+        if (saved) {
+          try {
+            setKeepers(JSON.parse(saved));
+          } catch (e) {
+            setKeepers([]);
+          }
         }
-      } else {
-        setKeepers(DEFAULT_KEEPERS);
       }
     } finally {
       setIsLoading(false);
@@ -81,7 +98,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
 
   // Persistence
   useEffect(() => {
-    if (keepers !== DEFAULT_KEEPERS) {
+    if (keepers.length > 0) {
       localStorage.setItem("hall_chronicles_keepers", JSON.stringify(keepers));
     }
   }, [keepers]);
@@ -220,8 +237,29 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
           </div>
         </div>
 
+        {/* ERROR STATE */}
+        {error && (
+          <div className="notched-card p-6 bg-rose-50/50 border border-rose-200/50 text-center mb-8">
+            <ShieldAlert className="w-8 h-8 text-rose-600 mx-auto mb-2" />
+            <p className="font-mono text-xs text-rose-800 font-semibold">{error}</p>
+            <button 
+              onClick={fetchLiveRankings}
+              className="mt-3 px-4 py-1.5 bg-rose-600 text-white font-mono text-[10px] uppercase cursor-pointer hover:bg-rose-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* LADDER LISTINGS */}
         <div className="space-y-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <LeaderboardRowSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
           <AnimatePresence>
             {sortedKeepers.map((keeper, index) => {
               const isPledging = lastPledgeTarget === keeper.name;
@@ -334,6 +372,7 @@ export default function LeaderboardView({ onAddLogMessage }: LeaderboardViewProp
               );
             })}
           </AnimatePresence>
+          )}
         </div>
 
         {/* MODAL: NOMINATE DIALOG */}

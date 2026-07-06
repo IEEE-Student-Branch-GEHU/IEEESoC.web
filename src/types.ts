@@ -60,3 +60,12 @@ export interface BotSimulatorState {
   efficiencyFactor: number; // %
   logs: TelemetryLog[];
 }
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      meshLineGeometry: any;
+      meshLineMaterial: any;
+    }
+  }
+}

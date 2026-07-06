@@ -28,14 +28,17 @@ export default function AdminUsersPanel({ onAddLogMessage }: Props) {
   const [editing, setEditing] = useState<User | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  const token = sessionStorage.getItem("ieeesoc_token");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const getHeaders = () => {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    const token = sessionStorage.getItem("ieeesoc_token");
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
       const params = search.length >= 2 ? `?q=${encodeURIComponent(search)}` : "";
-      const res = await fetch(`${API}/users${params}`, { headers });
+      const res = await fetch(`${API}/users${params}`, { headers: getHeaders() });
       const data = await res.json();
       if (data.success) setUsers(data.users);
     } catch {
@@ -64,12 +67,12 @@ export default function AdminUsersPanel({ onAddLogMessage }: Props) {
       if (editing) {
         const body: any = { name: form.name, role: form.role, githubUsername: form.githubUsername };
         if (form.password) body.password = form.password;
-        const res = await fetch(`${API}/users/${editing.id}`, { method: "PUT", headers, body: JSON.stringify(body) });
+        const res = await fetch(`${API}/users/${editing.id}`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(body) });
         const data = await res.json();
         if (!data.success) { onAddLogMessage(data.error || "Failed to update user", "critical"); return; }
         onAddLogMessage(`User updated: ${form.name}`, "success");
       } else {
-        const res = await fetch(`${API}/users`, { method: "POST", headers, body: JSON.stringify(form) });
+        const res = await fetch(`${API}/users`, { method: "POST", headers: getHeaders(), body: JSON.stringify(form) });
         const data = await res.json();
         if (!data.success) { onAddLogMessage(data.error || "Failed to create user", "critical"); return; }
         onAddLogMessage(`User created: ${form.name}`, "success");
@@ -84,7 +87,7 @@ export default function AdminUsersPanel({ onAddLogMessage }: Props) {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete user "${name}"?`)) return;
     try {
-      const res = await fetch(`${API}/users/${id}`, { method: "DELETE", headers });
+      const res = await fetch(`${API}/users/${id}`, { method: "DELETE", headers: getHeaders() });
       const data = await res.json();
       if (!data.success) { onAddLogMessage("Failed to delete user", "critical"); return; }
       onAddLogMessage(`User deleted: ${name}`, "warning");

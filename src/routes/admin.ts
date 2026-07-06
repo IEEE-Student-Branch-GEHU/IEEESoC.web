@@ -8,12 +8,47 @@ import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
 
-router.use(authenticate, requireRole("admin"));
-
 const withError = (res: Response, err: any, label: string) => {
   console.error(`Admin ${label} error:`, err);
   res.status(500).json({ error: `Failed to ${label}` });
 };
+
+// ─── Public endpoints (no auth needed) ───────────────────────────────
+
+router.get("/public/artifacts", async (_req: Request, res: Response) => {
+  try {
+    const items = await Artifact.find().sort({ dateCreated: -1 }).lean();
+    res.json({ success: true, artifacts: items });
+  } catch (err) {
+    withError(res, err, "fetch public artifacts");
+  }
+});
+
+router.get("/public/keepers", async (_req: Request, res: Response) => {
+  try {
+    const items = await Keeper.find().sort({ chroniclesCount: -1 }).lean();
+    const ranked = items.map((k, i) => ({ rank: i + 1, ...k }));
+    res.json({ success: true, keepers: ranked });
+  } catch (err) {
+    withError(res, err, "fetch public keepers");
+  }
+});
+
+router.get("/public/bot-config", async (_req: Request, res: Response) => {
+  try {
+    let config = await BotConfig.findOne();
+    if (!config) {
+      config = await BotConfig.create({});
+    }
+    res.json({ success: true, config });
+  } catch (err) {
+    withError(res, err, "fetch public bot config");
+  }
+});
+
+// ─── Protected admin endpoints (auth required) ──────────────────────
+
+router.use(authenticate, requireRole("admin"));
 
 const mapUser = (u: any) => ({
   id: u._id,
@@ -75,21 +110,6 @@ router.delete("/artifacts/:id", async (req: Request, res: Response) => {
   }
 });
 
-// ─── Public artifact endpoint (no auth needed) ──────────────────────
-
-router.get("/public/artifacts", async (_req: Request, res: Response) => {
-  try {
-    const items = await Artifact.find().sort({ dateCreated: -1 }).lean();
-    if (items.length === 0) {
-      const { DEFAULT_ARTIFACTS } = await import("../../src/data");
-      res.json({ success: true, artifacts: DEFAULT_ARTIFACTS });
-      return;
-    }
-    res.json({ success: true, artifacts: items });
-  } catch (err) {
-    withError(res, err, "fetch public artifacts");
-  }
-});
 
 // ─── Keepers ─────────────────────────────────────────────────────────
 
@@ -137,20 +157,7 @@ router.delete("/keepers/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/public/keepers", async (_req: Request, res: Response) => {
-  try {
-    const items = await Keeper.find().sort({ chroniclesCount: -1 }).lean();
-    if (items.length === 0) {
-      const { DEFAULT_KEEPERS } = await import("../../src/data");
-      res.json({ success: true, keepers: DEFAULT_KEEPERS });
-      return;
-    }
-    const ranked = items.map((k, i) => ({ rank: i + 1, ...k }));
-    res.json({ success: true, keepers: ranked });
-  } catch (err) {
-    withError(res, err, "fetch public keepers");
-  }
-});
+
 
 // ─── Bot Config ──────────────────────────────────────────────────────
 
@@ -175,17 +182,7 @@ router.put("/bot-config", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/public/bot-config", async (_req: Request, res: Response) => {
-  try {
-    let config = await BotConfig.findOne();
-    if (!config) {
-      config = await BotConfig.create({});
-    }
-    res.json({ success: true, config });
-  } catch (err) {
-    withError(res, err, "fetch public bot config");
-  }
-});
+
 
 // ─── Users ───────────────────────────────────────────────────────────
 

@@ -37,13 +37,16 @@ export default function AdminCratePanel({ onAddLogMessage }: Props) {
   const [editing, setEditing] = useState<Artifact | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  const token = sessionStorage.getItem("ieeesoc_token");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const getHeaders = () => {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    const token = sessionStorage.getItem("ieeesoc_token");
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  };
 
   const fetchArtifacts = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/artifacts`, { headers });
+      const res = await fetch(`${API}/artifacts`, { headers: getHeaders() });
       const data = await res.json();
       if (data.success) setArtifacts(data.artifacts);
     } catch {
@@ -75,7 +78,7 @@ export default function AdminCratePanel({ onAddLogMessage }: Props) {
     try {
       const url = editing ? `${API}/artifacts/${editing._id}` : `${API}/artifacts`;
       const method = editing ? "PUT" : "POST";
-      const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
+      const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(form) });
       const data = await res.json();
       if (!data.success) {
         onAddLogMessage(data.error || "Failed to save artifact", "critical");
@@ -92,7 +95,7 @@ export default function AdminCratePanel({ onAddLogMessage }: Props) {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete artifact "${name}"?`)) return;
     try {
-      const res = await fetch(`${API}/artifacts/${id}`, { method: "DELETE", headers });
+      const res = await fetch(`${API}/artifacts/${id}`, { method: "DELETE", headers: getHeaders() });
       const data = await res.json();
       if (!data.success) {
         onAddLogMessage("Failed to delete artifact", "critical");
