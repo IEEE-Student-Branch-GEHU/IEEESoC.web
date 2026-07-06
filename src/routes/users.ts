@@ -5,6 +5,10 @@ import { getBotCollection } from "../config/db";
 
 const router = Router();
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 router.get("/search", authenticate, async (req: Request, res: Response) => {
   try {
     if (typeof req.query.q !== "string") {
@@ -18,7 +22,8 @@ router.get("/search", authenticate, async (req: Request, res: Response) => {
       return;
     }
 
-    const regex = new RegExp(q, "i");
+    const escapedQ = escapeRegExp(q);
+    const regex = new RegExp(escapedQ, "i");
     const users = await PortalUser.find({
       $or: [
         { name: regex },

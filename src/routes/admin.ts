@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import Artifact from "../models/Artifact";
 import Keeper from "../models/Keeper";
 import BotConfig from "../models/BotConfig";
@@ -7,6 +8,10 @@ import PortalUser from "../models/PortalUser";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 const withError = (res: Response, err: any, label: string) => {
   console.error(`Admin ${label} error:`, err);
@@ -87,7 +92,12 @@ router.post("/artifacts", async (req: Request, res: Response) => {
 
 router.put("/artifacts/:id", async (req: Request, res: Response) => {
   try {
-    const artifact = await Artifact.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid artifact ID" });
+      return;
+    }
+    const artifact = await Artifact.findByIdAndUpdate(id, { $set: req.body }, { new: true, runValidators: true });
     if (!artifact) {
       res.status(404).json({ error: "Artifact not found" });
       return;
@@ -100,7 +110,12 @@ router.put("/artifacts/:id", async (req: Request, res: Response) => {
 
 router.delete("/artifacts/:id", async (req: Request, res: Response) => {
   try {
-    const artifact = await Artifact.findByIdAndDelete(req.params.id);
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid artifact ID" });
+      return;
+    }
+    const artifact = await Artifact.findByIdAndDelete(id);
     if (!artifact) {
       res.status(404).json({ error: "Artifact not found" });
       return;
@@ -134,7 +149,12 @@ router.post("/keepers", async (req: Request, res: Response) => {
 
 router.put("/keepers/:id", async (req: Request, res: Response) => {
   try {
-    const keeper = await Keeper.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid keeper ID" });
+      return;
+    }
+    const keeper = await Keeper.findByIdAndUpdate(id, { $set: req.body }, { new: true, runValidators: true });
     if (!keeper) {
       res.status(404).json({ error: "Keeper not found" });
       return;
@@ -147,7 +167,12 @@ router.put("/keepers/:id", async (req: Request, res: Response) => {
 
 router.delete("/keepers/:id", async (req: Request, res: Response) => {
   try {
-    const keeper = await Keeper.findByIdAndDelete(req.params.id);
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid keeper ID" });
+      return;
+    }
+    const keeper = await Keeper.findByIdAndDelete(id);
     if (!keeper) {
       res.status(404).json({ error: "Keeper not found" });
       return;
@@ -197,7 +222,8 @@ router.get("/users", async (req: Request, res: Response) => {
       }
       const q = req.query.q.trim();
       if (q.length >= 2) {
-        const regex = new RegExp(q, "i");
+        const escapedQ = escapeRegExp(q);
+        const regex = new RegExp(escapedQ, "i");
         query = {
           $or: [
             { name: regex },
@@ -235,19 +261,20 @@ router.post("/users", async (req: Request, res: Response) => {
       return;
     }
 
-    const existing = await PortalUser.findOne({ email: email.toLowerCase() });
+    const emailStr = String(email).toLowerCase();
+    const existing = await PortalUser.findOne({ email: emailStr });
     if (existing) {
       res.status(409).json({ error: "A user with this email already exists" });
       return;
     }
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(String(password), 12);
     const user = await PortalUser.create({
-      name,
-      email: email.toLowerCase(),
-      passwordHash,
-      role: role || "contributor",
-      githubUsername,
-      linkedinUsername,
+      name: String(name),
+      email: emailStr,
+      passwordHash: String(passwordHash),
+      role: String(role || "contributor") as "admin" | "contributor",
+      githubUsername: githubUsername ? String(githubUsername) : undefined,
+      linkedinUsername: linkedinUsername ? String(linkedinUsername) : undefined,
     });
     res.status(201).json({ success: true, user: mapUser(user) });
   } catch (err) {
@@ -257,44 +284,57 @@ router.post("/users", async (req: Request, res: Response) => {
 
 router.put("/users/:id", async (req: Request, res: Response) => {
   try {
-    const update: any = {};
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const update: {
+      name?: string;
+      role?: "admin" | "contributor";
+      githubUsername?: string | null;
+      linkedinUsername?: string | null;
+      passwordHash?: string;
+    } = {};
+
     if (req.body.name !== undefined) {
       if (typeof req.body.name !== "string") {
         res.status(400).json({ error: "name must be a string" });
         return;
       }
-      update.name = req.body.name;
+      update.name = String(req.body.name);
     }
     if (req.body.role !== undefined) {
       if (typeof req.body.role !== "string" || !["admin", "contributor"].includes(req.body.role)) {
         res.status(400).json({ error: "role must be admin or contributor" });
         return;
       }
-      update.role = req.body.role;
+      update.role = req.body.role as "admin" | "contributor";
     }
     if (req.body.githubUsername !== undefined) {
       if (req.body.githubUsername !== null && typeof req.body.githubUsername !== "string") {
         res.status(400).json({ error: "githubUsername must be a string or null" });
         return;
       }
-      update.githubUsername = req.body.githubUsername;
+      update.githubUsername = req.body.githubUsername === null ? null : String(req.body.githubUsername);
     }
     if (req.body.linkedinUsername !== undefined) {
       if (req.body.linkedinUsername !== null && typeof req.body.linkedinUsername !== "string") {
         res.status(400).json({ error: "linkedinUsername must be a string or null" });
         return;
       }
-      update.linkedinUsername = req.body.linkedinUsername;
+      update.linkedinUsername = req.body.linkedinUsername === null ? null : String(req.body.linkedinUsername);
     }
     if (req.body.password !== undefined) {
       if (typeof req.body.password !== "string") {
         res.status(400).json({ error: "password must be a string" });
         return;
       }
-      update.passwordHash = await bcrypt.hash(req.body.password, 12);
+      update.passwordHash = await bcrypt.hash(String(req.body.password), 12);
     }
 
-    const user = await PortalUser.findByIdAndUpdate(req.params.id, update, { new: true }).select("-passwordHash");
+    const user = await PortalUser.findByIdAndUpdate(id, { $set: update }, { new: true }).select("-passwordHash");
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -307,7 +347,12 @@ router.put("/users/:id", async (req: Request, res: Response) => {
 
 router.delete("/users/:id", async (req: Request, res: Response) => {
   try {
-    const user = await PortalUser.findByIdAndDelete(req.params.id);
+    const id = String(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+    const user = await PortalUser.findByIdAndDelete(id);
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;

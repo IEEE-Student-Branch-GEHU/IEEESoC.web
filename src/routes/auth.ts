@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import PortalUser from "../models/PortalUser";
 import BlockedToken from "../models/BlockedToken";
 import { authenticate, requireRole, signToken, JwtPayload } from "../middleware/auth";
@@ -27,14 +28,15 @@ router.post("/signup", authenticate, requireRole("admin"), async (req: Request, 
       return;
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const emailStr = String(email).toLowerCase();
+    const passwordHash = await bcrypt.hash(String(password), 12);
     const user = await PortalUser.create({
-      name,
-      email: email.toLowerCase(),
-      passwordHash,
-      role: role || "contributor",
-      githubUsername,
-      linkedinUsername,
+      name: String(name),
+      email: emailStr,
+      passwordHash: String(passwordHash),
+      role: String(role || "contributor") as "admin" | "contributor",
+      githubUsername: githubUsername ? String(githubUsername) : undefined,
+      linkedinUsername: linkedinUsername ? String(linkedinUsername) : undefined,
     });
 
     res.status(201).json({
@@ -55,13 +57,14 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const user = await PortalUser.findOne({ email: email.toLowerCase() });
+    const emailStr = String(email).toLowerCase();
+    const user = await PortalUser.findOne({ email: emailStr });
     if (!user) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(String(password), user.passwordHash);
     if (!valid) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
@@ -171,37 +174,49 @@ router.get("/me", authenticate, async (req: Request, res: Response) => {
 
 router.patch("/me", authenticate, async (req: Request, res: Response) => {
   try {
-    const update: any = {};
+    const userId = String(req.user!.id);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const update: {
+      name?: string;
+      githubUsername?: string | null;
+      linkedinUsername?: string | null;
+      passwordHash?: string;
+    } = {};
+
     if (req.body.name !== undefined) {
       if (typeof req.body.name !== "string") {
         res.status(400).json({ error: "name must be a string" });
         return;
       }
-      update.name = req.body.name;
+      update.name = String(req.body.name);
     }
     if (req.body.githubUsername !== undefined) {
       if (req.body.githubUsername !== null && typeof req.body.githubUsername !== "string") {
         res.status(400).json({ error: "githubUsername must be a string or null" });
         return;
       }
-      update.githubUsername = req.body.githubUsername;
+      update.githubUsername = req.body.githubUsername === null ? null : String(req.body.githubUsername);
     }
     if (req.body.linkedinUsername !== undefined) {
       if (req.body.linkedinUsername !== null && typeof req.body.linkedinUsername !== "string") {
         res.status(400).json({ error: "linkedinUsername must be a string or null" });
         return;
       }
-      update.linkedinUsername = req.body.linkedinUsername;
+      update.linkedinUsername = req.body.linkedinUsername === null ? null : String(req.body.linkedinUsername);
     }
     if (req.body.password !== undefined) {
       if (typeof req.body.password !== "string" || req.body.password.length < 8) {
         res.status(400).json({ error: "password must be a string of at least 8 characters" });
         return;
       }
-      update.passwordHash = await bcrypt.hash(req.body.password, 12);
+      update.passwordHash = await bcrypt.hash(String(req.body.password), 12);
     }
 
-    const user = await PortalUser.findByIdAndUpdate(req.user!.id, update, { new: true }).select("-passwordHash");
+    const user = await PortalUser.findByIdAndUpdate(userId, { $set: update }, { new: true }).select("-passwordHash");
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -236,10 +251,20 @@ router.post("/setup", async (req: Request, res: Response) => {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const emailStr = String(email).toLowerCase();
+    const passwordHash = await bcrypt.hash(String(password), 12);
     const user = await PortalUser.findOneAndUpdate(
-      { email: email.toLowerCase() },
-      { $setOnInsert: { name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername, linkedinUsername } },
+      { email: emailStr },
+      {
+        $setOnInsert: {
+          name: String(name),
+          email: emailStr,
+          passwordHash: String(passwordHash),
+          role: "admin",
+          githubUsername: githubUsername ? String(githubUsername) : undefined,
+          linkedinUsername: linkedinUsername ? String(linkedinUsername) : undefined,
+        },
+      },
       { upsert: true, new: true },
     );
 
