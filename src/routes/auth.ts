@@ -50,9 +50,8 @@ router.post("/signup", authenticate, requireRole("admin"), async (req: Request, 
 router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ error: "email and password are required" });
+    if (typeof email !== "string" || typeof password !== "string") {
+      res.status(400).json({ error: "email and password must be strings" });
       return;
     }
 

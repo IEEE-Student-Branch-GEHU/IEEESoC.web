@@ -7,7 +7,11 @@ const router = Router();
 
 router.get("/search", authenticate, async (req: Request, res: Response) => {
   try {
-    const q = (req.query.q as string || "").trim();
+    if (typeof req.query.q !== "string") {
+      res.status(400).json({ error: "Search query q must be a string" });
+      return;
+    }
+    const q = req.query.q.trim();
 
     if (!q || q.length < 2) {
       res.json({ success: true, users: [] });

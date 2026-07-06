@@ -189,18 +189,24 @@ router.put("/bot-config", async (req: Request, res: Response) => {
 
 router.get("/users", async (req: Request, res: Response) => {
   try {
-    const q = (req.query.q as string || "").trim();
     let query = {};
-    if (q.length >= 2) {
-      const regex = new RegExp(q, "i");
-      query = {
-        $or: [
-          { name: regex },
-          { email: regex },
-          { githubUsername: regex },
-          { linkedinUsername: regex },
-        ],
-      };
+    if (req.query.q !== undefined) {
+      if (typeof req.query.q !== "string") {
+        res.status(400).json({ error: "Search query q must be a string" });
+        return;
+      }
+      const q = req.query.q.trim();
+      if (q.length >= 2) {
+        const regex = new RegExp(q, "i");
+        query = {
+          $or: [
+            { name: regex },
+            { email: regex },
+            { githubUsername: regex },
+            { linkedinUsername: regex },
+          ],
+        };
+      }
     }
     const users = await PortalUser.find(query).select("-passwordHash").sort({ createdAt: -1 }).lean();
     res.json({ success: true, users: users.map(mapUser) });
