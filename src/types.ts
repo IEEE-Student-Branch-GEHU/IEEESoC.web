@@ -39,6 +39,7 @@ export interface PortalUser {
   email: string;
   role: "contributor" | "admin";
   githubUsername?: string;
+  linkedinUsername?: string;
   avatarUrl?: string;
   createdAt?: string;
 }

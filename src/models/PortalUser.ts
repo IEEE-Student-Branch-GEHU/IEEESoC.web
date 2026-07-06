@@ -8,6 +8,7 @@ export interface IPortalUser extends Document {
   provider?: "google" | "github";
   providerId?: string;
   githubUsername?: string;
+  linkedinUsername?: string;
   avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +22,7 @@ const PortalUserSchema = new Schema<IPortalUser>({
   provider: { type: String, enum: ["google", "github"] },
   providerId: { type: String },
   githubUsername: { type: String },
+  linkedinUsername: { type: String },
   avatarUrl: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

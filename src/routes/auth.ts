@@ -9,16 +9,13 @@ const router = Router();
 
 router.post("/signup", authenticate, requireRole("admin"), async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role, githubUsername } = req.body;
-
+    const { name, email, password, role, githubUsername, linkedinUsername } = req.body;
     if (!name || !email || !password) {
       res.status(400).json({ error: "name, email, and password are required" });
       return;
     }
-
-    const existing = await PortalUser.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      res.status(409).json({ error: "A user with this email already exists" });
+    if (typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "Password must be at least 8 characters" });
       return;
     }
 
@@ -29,11 +26,12 @@ router.post("/signup", authenticate, requireRole("admin"), async (req: Request, 
       passwordHash,
       role: role || "contributor",
       githubUsername,
+      linkedinUsername,
     });
 
     res.status(201).json({
       success: true,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, githubUsername: user.githubUsername },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, githubUsername: user.githubUsername, linkedinUsername: user.linkedinUsername },
     });
   } catch (err: any) {
     console.error("Signup error:", err);
@@ -79,6 +77,7 @@ router.post("/login", async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         githubUsername: user.githubUsername,
+        linkedinUsername: user.linkedinUsername,
         avatarUrl: user.avatarUrl,
       },
     });
@@ -151,6 +150,7 @@ router.get("/me", authenticate, async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         githubUsername: user.githubUsername,
+        linkedinUsername: user.linkedinUsername,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       },
@@ -164,11 +164,12 @@ router.get("/me", authenticate, async (req: Request, res: Response) => {
 
 router.patch("/me", authenticate, async (req: Request, res: Response) => {
   try {
-    const { name, password, githubUsername } = req.body;
+    const { name, password, githubUsername, linkedinUsername } = req.body;
     const update: any = {};
 
     if (name) update.name = name;
     if (githubUsername !== undefined) update.githubUsername = githubUsername;
+    if (linkedinUsername !== undefined) update.linkedinUsername = linkedinUsername;
     if (password) {
       update.passwordHash = await bcrypt.hash(password, 12);
     }
@@ -188,7 +189,7 @@ router.patch("/me", authenticate, async (req: Request, res: Response) => {
 
 router.post("/setup", async (req: Request, res: Response) => {
   try {
-    const { name, email, password, githubUsername } = req.body;
+    const { name, email, password, githubUsername, linkedinUsername } = req.body;
     if (!name || !email || !password) {
       res.status(400).json({ error: "name, email, and password are required" });
       return;
@@ -207,11 +208,11 @@ router.post("/setup", async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await PortalUser.findOneAndUpdate(
       { email: email.toLowerCase() },
-      { $setOnInsert: { name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername } },
+      { $setOnInsert: { name, email: email.toLowerCase(), passwordHash, role: "admin", githubUsername, linkedinUsername } },
       { upsert: true, new: true },
     );
 
-    res.status(201).json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, githubUsername: user.githubUsername, linkedinUsername: user.linkedinUsername } });
   } catch (err: any) {
     console.error("Setup error:", err);
     res.status(500).json({ error: "Failed to create admin" });

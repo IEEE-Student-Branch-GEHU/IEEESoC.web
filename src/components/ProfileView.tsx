@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { 
   User, ShieldCheck, Mail, Github, Award, GitPullRequest, GitMerge,
-  Edit2, Lock, LogOut, Loader2, Save, X, Search
+  Edit2, Lock, LogOut, Loader2, Save, X, Search, Linkedin
 } from "lucide-react";
 import type { PortalUser } from "../types";
 import LanyardCard from "./LanyardCard";
@@ -19,7 +19,16 @@ export default function ProfileView({ onAddLogMessage }: Props) {
   // Edit Info Form state
   const [name, setName] = useState(user?.name || "");
   const [githubUsername, setGithubUsername] = useState(user?.githubUsername || "");
+  const [linkedinUsername, setLinkedinUsername] = useState(user?.linkedinUsername || "");
   const [isSavingInfo, setIsSavingInfo] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setGithubUsername(user.githubUsername || "");
+      setLinkedinUsername(user.linkedinUsername || "");
+    }
+  }, [user?.name, user?.githubUsername, user?.linkedinUsername]);
 
   // Password Form state
   const [password, setPassword] = useState("");
@@ -81,7 +90,7 @@ export default function ProfileView({ onAddLogMessage }: Props) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, githubUsername }),
+        body: JSON.stringify({ name, githubUsername, linkedinUsername }),
       });
       const data = await res.json();
       if (data.success) {
@@ -167,16 +176,28 @@ export default function ProfileView({ onAddLogMessage }: Props) {
             <p className="font-mono text-xs text-on-surface-variant/80 flex items-center justify-center md:justify-start gap-1.5">
               <Mail className="w-3.5 h-3.5" /> {user.email}
             </p>
-            {user.githubUsername && (
-              <a
-                href={`https://github.com/${user.githubUsername}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-on-surface transition-colors"
-              >
-                <Github className="w-3.5 h-3.5" /> @{user.githubUsername}
-              </a>
-            )}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1">
+              {user.githubUsername && (
+                <a
+                  href={`https://github.com/${user.githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+                >
+                  <Github className="w-3.5 h-3.5" /> @{user.githubUsername}
+                </a>
+              )}
+              {user.linkedinUsername && (
+                <a
+                  href={user.linkedinUsername.startsWith("http") ? user.linkedinUsername : `https://linkedin.com/in/${user.linkedinUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+                >
+                  <Linkedin className="w-3.5 h-3.5" /> @{user.linkedinUsername}
+                </a>
+              )}
+            </div>
           </div>
           <div className="flex flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
             <button
@@ -217,6 +238,16 @@ export default function ProfileView({ onAddLogMessage }: Props) {
                   type="text"
                   value={githubUsername}
                   onChange={(e) => setGithubUsername(e.target.value)}
+                  className="w-full px-3 py-2 bg-surface-container border border-on-surface/10 rounded-lg font-mono text-xs text-on-surface outline-none focus:border-on-surface/30 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] uppercase tracking-wider text-on-surface-variant mb-1">LinkedIn Username / URL</label>
+                <input
+                  type="text"
+                  value={linkedinUsername}
+                  onChange={(e) => setLinkedinUsername(e.target.value)}
+                  placeholder="e.g. johndoe"
                   className="w-full px-3 py-2 bg-surface-container border border-on-surface/10 rounded-lg font-mono text-xs text-on-surface outline-none focus:border-on-surface/30 transition-all"
                 />
               </div>
@@ -340,7 +371,7 @@ export default function ProfileView({ onAddLogMessage }: Props) {
                     <div className="font-serif font-bold text-on-surface text-sm truncate">{u.name}</div>
                     <div className="font-mono text-[9px] text-on-surface-variant/70 truncate">{u.email}</div>
                     <div className="font-mono text-[8px] uppercase tracking-wider text-on-surface-variant/50 truncate">
-                      {u.role} {u.githubUsername && `· @${u.githubUsername}`}
+                      {u.role} {u.githubUsername && `· @${u.githubUsername}`} {u.linkedinUsername && `· in/${u.linkedinUsername}`}
                     </div>
                   </div>
                 </div>

@@ -56,6 +56,7 @@ const mapUser = (u: any) => ({
   email: u.email,
   role: u.role,
   githubUsername: u.githubUsername,
+  linkedinUsername: u.linkedinUsername,
   avatarUrl: u.avatarUrl,
   createdAt: u.createdAt,
 });
@@ -192,7 +193,14 @@ router.get("/users", async (req: Request, res: Response) => {
     let query = {};
     if (q.length >= 2) {
       const regex = new RegExp(q, "i");
-      query = { $or: [{ name: regex }, { email: regex }, { githubUsername: regex }] };
+      query = {
+        $or: [
+          { name: regex },
+          { email: regex },
+          { githubUsername: regex },
+          { linkedinUsername: regex },
+        ],
+      };
     }
     const users = await PortalUser.find(query).select("-passwordHash").sort({ createdAt: -1 }).lean();
     res.json({ success: true, users: users.map(mapUser) });
@@ -203,7 +211,7 @@ router.get("/users", async (req: Request, res: Response) => {
 
 router.post("/users", async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role, githubUsername } = req.body;
+    const { name, email, password, role, githubUsername, linkedinUsername } = req.body;
     if (!name || !email || !password) {
       res.status(400).json({ error: "name, email, and password are required" });
       return;
@@ -214,7 +222,14 @@ router.post("/users", async (req: Request, res: Response) => {
       return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await PortalUser.create({ name, email: email.toLowerCase(), passwordHash, role: role || "contributor", githubUsername });
+    const user = await PortalUser.create({
+      name,
+      email: email.toLowerCase(),
+      passwordHash,
+      role: role || "contributor",
+      githubUsername,
+      linkedinUsername,
+    });
     res.status(201).json({ success: true, user: mapUser(user) });
   } catch (err) {
     withError(res, err, "create user");
@@ -227,6 +242,7 @@ router.put("/users/:id", async (req: Request, res: Response) => {
     if (req.body.name) update.name = req.body.name;
     if (req.body.role) update.role = req.body.role;
     if (req.body.githubUsername !== undefined) update.githubUsername = req.body.githubUsername;
+    if (req.body.linkedinUsername !== undefined) update.linkedinUsername = req.body.linkedinUsername;
     if (req.body.password) update.passwordHash = await bcrypt.hash(req.body.password, 12);
 
     const user = await PortalUser.findByIdAndUpdate(req.params.id, update, { new: true }).select("-passwordHash");

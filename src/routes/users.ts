@@ -16,7 +16,12 @@ router.get("/search", authenticate, async (req: Request, res: Response) => {
 
     const regex = new RegExp(q, "i");
     const users = await PortalUser.find({
-      $or: [{ name: regex }, { email: regex }, { githubUsername: regex }],
+      $or: [
+        { name: regex },
+        { email: regex },
+        { githubUsername: regex },
+        { linkedinUsername: regex },
+      ],
     })
       .select("-passwordHash")
       .limit(20)
@@ -28,6 +33,7 @@ router.get("/search", authenticate, async (req: Request, res: Response) => {
       email: u.email,
       role: u.role,
       githubUsername: u.githubUsername,
+      linkedinUsername: u.linkedinUsername,
       avatarUrl: u.avatarUrl,
     }));
 
@@ -75,6 +81,7 @@ router.get("/:id", authenticate, async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         githubUsername: user.githubUsername,
+        linkedinUsername: user.linkedinUsername,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       },
