@@ -10,12 +10,20 @@ const router = Router();
 router.post("/signup", authenticate, requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const { name, email, password, role, githubUsername, linkedinUsername } = req.body;
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "name, email, and password are required" });
+    if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "name, email, and password (at least 8 chars) must be strings" });
       return;
     }
-    if (typeof password !== "string" || password.length < 8) {
-      res.status(400).json({ error: "Password must be at least 8 characters" });
+    if (role !== undefined && (typeof role !== "string" || !["admin", "contributor"].includes(role))) {
+      res.status(400).json({ error: "role must be 'admin' or 'contributor'" });
+      return;
+    }
+    if (githubUsername !== undefined && githubUsername !== null && typeof githubUsername !== "string") {
+      res.status(400).json({ error: "githubUsername must be a string" });
+      return;
+    }
+    if (linkedinUsername !== undefined && linkedinUsername !== null && typeof linkedinUsername !== "string") {
+      res.status(400).json({ error: "linkedinUsername must be a string" });
       return;
     }
 
@@ -164,14 +172,34 @@ router.get("/me", authenticate, async (req: Request, res: Response) => {
 
 router.patch("/me", authenticate, async (req: Request, res: Response) => {
   try {
-    const { name, password, githubUsername, linkedinUsername } = req.body;
     const update: any = {};
-
-    if (name) update.name = name;
-    if (githubUsername !== undefined) update.githubUsername = githubUsername;
-    if (linkedinUsername !== undefined) update.linkedinUsername = linkedinUsername;
-    if (password) {
-      update.passwordHash = await bcrypt.hash(password, 12);
+    if (req.body.name !== undefined) {
+      if (typeof req.body.name !== "string") {
+        res.status(400).json({ error: "name must be a string" });
+        return;
+      }
+      update.name = req.body.name;
+    }
+    if (req.body.githubUsername !== undefined) {
+      if (req.body.githubUsername !== null && typeof req.body.githubUsername !== "string") {
+        res.status(400).json({ error: "githubUsername must be a string or null" });
+        return;
+      }
+      update.githubUsername = req.body.githubUsername;
+    }
+    if (req.body.linkedinUsername !== undefined) {
+      if (req.body.linkedinUsername !== null && typeof req.body.linkedinUsername !== "string") {
+        res.status(400).json({ error: "linkedinUsername must be a string or null" });
+        return;
+      }
+      update.linkedinUsername = req.body.linkedinUsername;
+    }
+    if (req.body.password !== undefined) {
+      if (typeof req.body.password !== "string" || req.body.password.length < 8) {
+        res.status(400).json({ error: "password must be a string of at least 8 characters" });
+        return;
+      }
+      update.passwordHash = await bcrypt.hash(req.body.password, 12);
     }
 
     const user = await PortalUser.findByIdAndUpdate(req.user!.id, update, { new: true }).select("-passwordHash");
@@ -190,12 +218,16 @@ router.patch("/me", authenticate, async (req: Request, res: Response) => {
 router.post("/setup", async (req: Request, res: Response) => {
   try {
     const { name, email, password, githubUsername, linkedinUsername } = req.body;
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "name, email, and password are required" });
+    if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "name, email, and password (at least 8 chars) must be strings" });
       return;
     }
-    if (typeof password !== "string" || password.length < 8) {
-      res.status(400).json({ error: "Password must be at least 8 characters" });
+    if (githubUsername !== undefined && githubUsername !== null && typeof githubUsername !== "string") {
+      res.status(400).json({ error: "githubUsername must be a string" });
+      return;
+    }
+    if (linkedinUsername !== undefined && linkedinUsername !== null && typeof linkedinUsername !== "string") {
+      res.status(400).json({ error: "linkedinUsername must be a string" });
       return;
     }
 

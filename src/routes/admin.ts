@@ -212,10 +212,23 @@ router.get("/users", async (req: Request, res: Response) => {
 router.post("/users", async (req: Request, res: Response) => {
   try {
     const { name, email, password, role, githubUsername, linkedinUsername } = req.body;
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "name, email, and password are required" });
+    if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string") {
+      res.status(400).json({ error: "name, email, and password must be strings" });
       return;
     }
+    if (role !== undefined && (typeof role !== "string" || !["admin", "contributor"].includes(role))) {
+      res.status(400).json({ error: "role must be 'admin' or 'contributor'" });
+      return;
+    }
+    if (githubUsername !== undefined && githubUsername !== null && typeof githubUsername !== "string") {
+      res.status(400).json({ error: "githubUsername must be a string" });
+      return;
+    }
+    if (linkedinUsername !== undefined && linkedinUsername !== null && typeof linkedinUsername !== "string") {
+      res.status(400).json({ error: "linkedinUsername must be a string" });
+      return;
+    }
+
     const existing = await PortalUser.findOne({ email: email.toLowerCase() });
     if (existing) {
       res.status(409).json({ error: "A user with this email already exists" });
@@ -239,11 +252,41 @@ router.post("/users", async (req: Request, res: Response) => {
 router.put("/users/:id", async (req: Request, res: Response) => {
   try {
     const update: any = {};
-    if (req.body.name) update.name = req.body.name;
-    if (req.body.role) update.role = req.body.role;
-    if (req.body.githubUsername !== undefined) update.githubUsername = req.body.githubUsername;
-    if (req.body.linkedinUsername !== undefined) update.linkedinUsername = req.body.linkedinUsername;
-    if (req.body.password) update.passwordHash = await bcrypt.hash(req.body.password, 12);
+    if (req.body.name !== undefined) {
+      if (typeof req.body.name !== "string") {
+        res.status(400).json({ error: "name must be a string" });
+        return;
+      }
+      update.name = req.body.name;
+    }
+    if (req.body.role !== undefined) {
+      if (typeof req.body.role !== "string" || !["admin", "contributor"].includes(req.body.role)) {
+        res.status(400).json({ error: "role must be admin or contributor" });
+        return;
+      }
+      update.role = req.body.role;
+    }
+    if (req.body.githubUsername !== undefined) {
+      if (req.body.githubUsername !== null && typeof req.body.githubUsername !== "string") {
+        res.status(400).json({ error: "githubUsername must be a string or null" });
+        return;
+      }
+      update.githubUsername = req.body.githubUsername;
+    }
+    if (req.body.linkedinUsername !== undefined) {
+      if (req.body.linkedinUsername !== null && typeof req.body.linkedinUsername !== "string") {
+        res.status(400).json({ error: "linkedinUsername must be a string or null" });
+        return;
+      }
+      update.linkedinUsername = req.body.linkedinUsername;
+    }
+    if (req.body.password !== undefined) {
+      if (typeof req.body.password !== "string") {
+        res.status(400).json({ error: "password must be a string" });
+        return;
+      }
+      update.passwordHash = await bcrypt.hash(req.body.password, 12);
+    }
 
     const user = await PortalUser.findByIdAndUpdate(req.params.id, update, { new: true }).select("-passwordHash");
     if (!user) {
