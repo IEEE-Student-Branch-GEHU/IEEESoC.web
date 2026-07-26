@@ -17,18 +17,28 @@ jobs:
           fetch-depth: 0
           ref: main
 
-      - name: Generate changelog
+      - name: Generate changelog locally
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-message: "chore(release): {version}"
+          git-message: "chore(release): {version} [skip ci]"
           preset: angular
           tag-prefix: "v"
           output-file: "CHANGELOG.md"
           version-file: package.json
           skip-on-empty: "true"
           skip-version-file: "false"
-          create-pull-request: "true"
-          pull-request-target-branch: main
-          skip-tag: "true"
+          skip-commit: "true"
+          git-push: "false"
           create-summary: "true"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(release): update changelog [skip ci]"
+          title: "chore(release): update changelog"
+          body: "Automated changelog update triggered by push to main."
+          branch: "chore/auto-changelog"
+          base: main
+          delete-branch: true
