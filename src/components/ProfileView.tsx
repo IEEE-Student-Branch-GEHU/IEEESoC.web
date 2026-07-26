@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { 
-  User, ShieldCheck, Mail, Github, Award, GitPullRequest, GitMerge,
+  User, ShieldCheck, Mail, GitFork, Award, GitPullRequest, GitMerge,
   Edit2, Lock, LogOut, Loader2, Save, X, Search
 } from "lucide-react";
 import type { PortalUser } from "../types";
@@ -174,7 +174,7 @@ export default function ProfileView({ onAddLogMessage }: Props) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-on-surface transition-colors"
               >
-                <Github className="w-3.5 h-3.5" /> @{user.githubUsername}
+                <GitFork className="w-3.5 h-3.5" /> @{user.githubUsername}
               </a>
             )}
           </div>
