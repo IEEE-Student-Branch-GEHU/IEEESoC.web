@@ -28,4 +28,7 @@ jobs:
           version-file: package.json
           skip-on-empty: "true"
           skip-version-file: "false"
+          create-pull-request: "true"
+          pull-request-target-branch: main
+          skip-tag: "true"
           create-summary: "true"
