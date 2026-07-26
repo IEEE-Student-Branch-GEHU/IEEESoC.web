@@ -29,6 +29,7 @@ jobs:
           skip-on-empty: "true"
           skip-version-file: "false"
           skip-commit: "true"
+          skip-tag: "true"
           git-push: "false"
           create-summary: "true"
 
