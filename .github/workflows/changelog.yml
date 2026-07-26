@@ -34,12 +34,21 @@ jobs:
           create-summary: "true"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(release): update changelog [skip ci]"
-          title: "chore(release): update changelog"
-          body: "Automated changelog update triggered by push to main."
-          branch: "chore/auto-changelog"
-          base: main
-          delete-branch: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            BRANCH="chore/auto-changelog-$(date +%s)"
+            git checkout -b "$BRANCH"
+            git add -A
+            git commit -m "chore(release): update changelog [skip ci]"
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "chore(release): update changelog" \
+              --body "Automated changelog update triggered by push to main." \
+              --base main \
+              --head "$BRANCH"
+          else
+            echo "No changes to commit"
+          fi
