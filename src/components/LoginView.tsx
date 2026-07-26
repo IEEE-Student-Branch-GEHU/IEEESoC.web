@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
 import { useAuth } from "../hooks/useAuth";
-import { LogIn, X, Eye, EyeOff, ShieldCheck, Chrome, Github } from "lucide-react";
+import { LogIn, X, Eye, EyeOff, ShieldCheck, Globe, GitFork } from "lucide-react";
 
 interface LoginViewProps {
   onClose?: () => void;
@@ -131,14 +131,14 @@ export default function LoginView({ onClose, onSuccess, returnTo }: LoginViewPro
             href="/api/auth/google"
             className="flex items-center justify-center gap-2 px-6 py-3 border border-on-surface/20 hover:border-on-surface/40 bg-surface hover:bg-surface-container-high transition-colors rounded font-mono text-xs font-semibold uppercase tracking-wider text-on-surface cursor-pointer"
           >
-            <Chrome className="w-4 h-4" />
+            <Globe className="w-4 h-4" />
             Sign in with Google
           </a>
           <a
             href="/api/auth/github"
             className="flex items-center justify-center gap-2 px-6 py-3 border border-on-surface/20 hover:border-on-surface/40 bg-surface hover:bg-surface-container-high transition-colors rounded font-mono text-xs font-semibold uppercase tracking-wider text-on-surface cursor-pointer"
           >
-            <Github className="w-4 h-4" />
+            <GitFork className="w-4 h-4" />
             Sign in with GitHub
           </a>
         </div>
