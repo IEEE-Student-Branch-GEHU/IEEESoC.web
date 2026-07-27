@@ -18,7 +18,7 @@ jobs:
           ref: main
 
       - name: Generate changelog locally
-        uses: TriPSs/conventional-changelog-action@v5
+        uses: TriPSs/conventional-changelog-action@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           git-message: "chore(release): {version} [skip ci]"
