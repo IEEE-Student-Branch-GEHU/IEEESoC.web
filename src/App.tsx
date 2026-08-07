@@ -9,6 +9,7 @@ import {
 // Types & Data
 import { TelemetryLog, ChronicleArtifact } from "./types";
 import { CACHE_VERSION } from "./data";
+import { SEEDED_PROJECTS } from "./data_seeded";
 
 // Sub-components
 import GalleryView from "./components/GalleryView";
@@ -107,22 +108,26 @@ export default function App() {
   }, [isPopMode]);
 
   // Synchronize artifacts list in parent to feed terminal info
-  const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>([]);
+  const [artifacts, setArtifacts] = useState<ChronicleArtifact[]>(SEEDED_PROJECTS);
 
   useEffect(() => {
     const cachedVersion = localStorage.getItem("ieeesoc_cache_version");
     if (cachedVersion !== String(CACHE_VERSION)) {
       localStorage.removeItem("hall_chronicles_artifacts");
       localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
+      setArtifacts(SEEDED_PROJECTS);
       return;
     }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
-        setArtifacts(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setArtifacts(parsed.length > 0 ? parsed : SEEDED_PROJECTS);
       } catch (e) {
-        setArtifacts([]);
+        setArtifacts(SEEDED_PROJECTS);
       }
+    } else {
+      setArtifacts(SEEDED_PROJECTS);
     }
   }, [activeTab]);
 

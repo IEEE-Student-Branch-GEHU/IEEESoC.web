@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChronicleArtifact } from "../types";
 import { ARTIFACT_IMAGES, CACHE_VERSION } from "../data";
+import { SEEDED_PROJECTS } from "../data_seeded";
 import { ArtifactCardSkeleton } from "./Skeleton";
 import { 
   Search, Filter, Plus, Calendar, ShieldAlert, Cpu, 
@@ -19,17 +20,18 @@ export default function CrateView({ onAddLogMessage }: CrateViewProps) {
     if (cachedVersion !== String(CACHE_VERSION)) {
       localStorage.removeItem("hall_chronicles_artifacts");
       localStorage.setItem("ieeesoc_cache_version", String(CACHE_VERSION));
-      return [];
+      return SEEDED_PROJECTS;
     }
     const saved = localStorage.getItem("hall_chronicles_artifacts");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return parsed.length > 0 ? parsed : SEEDED_PROJECTS;
       } catch (e) {
         // Fallback
       }
     }
-    return [];
+    return SEEDED_PROJECTS;
   });
 
   const [isLoading, setIsLoading] = useState(true);
