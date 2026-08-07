@@ -36,6 +36,25 @@ export async function seedDevAdmin() {
   }
 }
 
+export async function seedArtifacts() {
+  try {
+    const { default: Artifact } = await import("../models/Artifact");
+    const count = await Artifact.countDocuments();
+    if (count > 0) {
+      console.log("ℹ️ Artifacts collection is already seeded.");
+      return;
+    }
+
+    const { SEEDED_PROJECTS } = await import("../data_seeded");
+    if (SEEDED_PROJECTS && SEEDED_PROJECTS.length > 0) {
+      await Artifact.insertMany(SEEDED_PROJECTS);
+      console.log(`✅ Successfully seeded ${SEEDED_PROJECTS.length} projects as artifacts.`);
+    }
+  } catch (err) {
+    console.error("❌ Failed to seed artifacts:", err);
+  }
+}
+
 export function getBotCollection(name: string) {
   return mongoose.connection.db.collection(name);
 }
