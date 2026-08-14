@@ -14,7 +14,7 @@
     "dev:all": "concurrently -n api,vite \"npm run dev:server\" \"npm run dev\""
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
+    "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.6.1",
     "@react-three/rapier": "^2.2.0",
     "bcryptjs": "^3.0.3",
