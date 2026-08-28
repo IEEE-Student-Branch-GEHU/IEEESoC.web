@@ -23,7 +23,7 @@
     "express": "^4.21.2",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
-    "lucide-react": "^1.30.0",
+    "lucide-react": "^1.31.0",
     "meshline": "^3.3.1",
     "mongoose": "^9.9.1",
     "motion": "^13.1.0",
